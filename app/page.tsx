@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { AuroraFlux } from "@/components/ui/aurora-flux";
 import {
   BarChart3, BookOpen, Bot, ChevronDown, CircleDollarSign, Clock3,
   LayoutDashboard, Plus, Search, Settings, ShieldCheck, Target,
@@ -424,7 +425,13 @@ function Analytics({trades}:{trades:Trade[]}) {
 }
 
 function AIReview({trades}:{trades:Trade[]}) {
-  return <div className="aiPage"><section className="aiHero"><div className="aiIcon"><Bot/></div><div><span className="label">TRADEVAULT AI</span><h2>Analysis will follow the data.</h2><p>{trades.length} logged trades are available. The review engine will wait for sufficient history before making performance claims.</p></div></section><div className="insightGrid"><Insight title="Current sample" text={trades.length+" trades are available for analysis."}/><Insight title="No fabricated conclusions" text="TradeVault will not label a setup your best strategy without enough evidence."/><Insight title="Next input" text="Import more history or connect a broker data source to deepen the review."/></div></div>;
+  return <div className="aiPage">
+    <section className="aiHero auroraHero">
+      <AuroraFlux fullScreen={false} pauseWhenHidden pauseOnHover={false} mix={0.5} ariaLabel="Animated aurora background" />
+      <div className="auroraContent"><div className="aiIcon"><Bot/></div><div><span className="label">TRADEVAULT AI</span><h2>Analysis will follow the data.</h2><p>{trades.length} logged trades are available. The review engine will wait for sufficient history before making performance claims.</p></div></div>
+    </section>
+    <div className="insightGrid"><Insight title="Current sample" text={trades.length+" trades are available for analysis."}/><Insight title="No fabricated conclusions" text="TradeVault will not label a setup your best strategy without enough evidence."/><Insight title="Next input" text="Import more history or connect a broker data source to deepen the review."/></div>
+  </div>;
 }
 
 function Insight({title,text}:{title:string;text:string}) { return <div className="card insight"><div className="dot"/><div><b>{title}</b><p>{text}</p></div></div>; }
