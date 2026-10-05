@@ -1,16 +1,7 @@
 import { createHash, randomBytes } from "node:crypto";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-
-const DEV_EMAIL = process.env.DEV_USER_EMAIL || "tradevault-dev@local.invalid";
-
-async function getDevUser() {
-  return prisma.user.upsert({
-    where: { email: DEV_EMAIL },
-    update: {},
-    create: { email: DEV_EMAIL, name: "TradeVault Development User" }
-  });
-}
+import { getCurrentUser } from "@/lib/auth";
 
 const hashToken = (token: string) =>
   createHash("sha256").update(token, "utf8").digest("hex");
@@ -21,7 +12,8 @@ export async function POST(
 ) {
   try {
     const { id } = await context.params;
-    const user = await getDevUser();
+    const user = await getCurrentUser();
+    if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     const account = await prisma.tradingAccount.findFirst({
       where: { id, userId: user.id },
@@ -64,7 +56,8 @@ export async function DELETE(
 ) {
   try {
     const { id } = await context.params;
-    const user = await getDevUser();
+    const user = await getCurrentUser();
+    if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     const account = await prisma.tradingAccount.findFirst({
       where: { id, userId: user.id },
