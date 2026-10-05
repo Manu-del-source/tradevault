@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import {
   BarChart3, BookOpen, Bot, ChevronDown, CircleDollarSign, Clock3,
   LayoutDashboard, Plus, Search, Settings, ShieldCheck, Target,
-  TrendingDown, TrendingUp, Wallet, X
+  TrendingDown, TrendingUp, Upload, Wallet, X
 } from "lucide-react";
 
 type Account = { id: string; name: string; broker: string | null; currency: string };
@@ -54,6 +54,7 @@ export default function Home() {
   const [takeProfit, setTakeProfit] = useState("");
   const [notes, setNotes] = useState("");
   const [selectedTrade, setSelectedTrade] = useState<Trade | null>(null);
+  const [importOpen, setImportOpen] = useState(false);
 
   async function loadAccounts() {
     const response = await fetch("/api/accounts");
@@ -173,7 +174,7 @@ export default function Home() {
       <section className="content">
         <header className="topbar">
           <div><p className="eyebrow">TRADING PERFORMANCE</p><h1>{active}</h1></div>
-          <button className="primary" onClick={() => setModal(true)} disabled={!accountId}><Plus/>Log trade</button>
+          <div className="topActions"><button className="secondary" onClick={() => setImportOpen(true)} disabled={!accountId}><Upload/>Import CSV</button><button className="primary" onClick={() => setModal(true)} disabled={!accountId}><Plus/>Log trade</button></div>
         </header>
         {error && <div className="errorBar">{error}<button onClick={() => setError("")}><X size={15}/></button></div>}
         {loading ? <div className="card full loadingState">Loading account data…</div> :
@@ -200,9 +201,55 @@ export default function Home() {
         <label>Notes<textarea placeholder="What happened on this trade?" value={notes} onChange={e => setNotes(e.target.value)}/></label>
         <button className="primary wide" onClick={addTrade} disabled={saving}>{saving ? "Saving…" : "Save trade"}</button>
       </div></div>}
+      {importOpen && <CsvImport accountId={accountId} onClose={() => setImportOpen(false)} onImported={async () => { setImportOpen(false); await loadTrades(accountId); }}/>}
       {selectedTrade && <TradeDrawer trade={selectedTrade} onClose={() => setSelectedTrade(null)} onSaved={trade => { setTrades(current => current.map(t => t.id === trade.id ? trade : t)); setSelectedTrade(trade); }} onDeleted={id => { setTrades(current => current.filter(t => t.id !== id)); setSelectedTrade(null); }}/>}
     </main>
   );
+}
+
+function CsvImport({accountId,onClose,onImported}:{accountId:string;onClose:()=>void;onImported:()=>Promise<void>}) {
+  const [file,setFile]=useState<File|null>(null);
+  const [rows,setRows]=useState<Record<string,string>[]>([]);
+  const [headers,setHeaders]=useState<string[]>([]);
+  const [errors,setErrors]=useState<string[]>([]);
+  const [busy,setBusy]=useState(false);
+  const [message,setMessage]=useState("");
+
+  function parse(text:string) {
+    const lines=text.split(/\r?\n/).filter(Boolean);
+    if(lines.length<2) return {headers:[],rows:[]};
+    const hs=lines[0].split(",").map(h=>h.trim());
+    return {headers:hs,rows:lines.slice(1,101).map(line=>{const cells=line.split(",");return Object.fromEntries(hs.map((h,i)=>[h,cells[i]?.trim()??""]));})};
+  }
+  async function choose(f:File|null) {
+    setFile(f); setErrors([]); setMessage("");
+    if(!f) {setRows([]);setHeaders([]);return;}
+    const parsed=parse(await f.text());
+    setHeaders(parsed.headers); setRows(parsed.rows);
+    const missing=[];
+    const lower=parsed.headers.map(h=>h.toLowerCase());
+    if(!["symbol","instrument","pair"].some(k=>lower.includes(k))) missing.push("symbol / instrument / pair");
+    if(!["pnl","profit","profit_loss"].some(k=>lower.includes(k))) missing.push("pnl / profit / profit_loss");
+    setErrors(missing.length ? ["Required columns missing: "+missing.join(", ")] : []);
+  }
+  async function importFile() {
+    if(!file || errors.length) return;
+    setBusy(true); setMessage("");
+    const form=new FormData(); form.append("accountId",accountId); form.append("file",file);
+    const response=await fetch("/api/trades/import",{method:"POST",body:form});
+    const data=await response.json();
+    if(!response.ok){setMessage(data.error??"Import failed");setBusy(false);return;}
+    setMessage(data.imported+" trades imported from "+data.rows+" CSV rows.");
+    await onImported(); setBusy(false);
+  }
+  return <div className="overlay"><div className="modal importModal">
+    <div className="modalHead"><div><p className="eyebrow">DATA IMPORT</p><h2>Import CSV</h2></div><button className="iconBtn" onClick={onClose}><X/></button></div>
+    <label className="fileDrop"><Upload/><span><b>{file?.name ?? "Choose a CSV file"}</b><small>Required: symbol and P&amp;L · optional: direction, volume, strategy, session, notes, date</small></span><input type="file" accept=".csv,text/csv" onChange={e=>choose(e.target.files?.[0]??null)}/></label>
+    {errors.map(e=><div className="drawerMessage" key={e}>{e}</div>)}
+    {headers.length>0 && <><div className="importMeta">{headers.length} columns · previewing {rows.length} rows</div><div className="importPreview"><table><thead><tr>{headers.slice(0,7).map(h=><th key={h}>{h}</th>)}</tr></thead><tbody>{rows.slice(0,5).map((r,i)=><tr key={i}>{headers.slice(0,7).map(h=><td key={h}>{r[h]||"—"}</td>)}</tr>)}</tbody></table></div></>}
+    {message && <div className="successMessage">{message}</div>}
+    <div className="drawerActions"><button className="secondary" onClick={onClose}>Cancel</button><button className="primary" onClick={importFile} disabled={!file||errors.length>0||busy}>{busy?"Importing…":"Import trades"}</button></div>
+  </div></div>;
 }
 
 function Metric({icon: Icon,label,value,detail}:{icon:any;label:string;value:string;detail:string}) {
