@@ -1,5 +1,5 @@
 #property strict
-#property version   "1.0"
+#property version   "1.1"
 #property description "TradeVault read-only MT5 history synchronizer"
 
 input string SyncUrl = "https://YOUR-TRADEVAULT-DOMAIN.vercel.app/api/trades/sync/mt5";
@@ -12,25 +12,30 @@ struct PositionSummary
 {
    ulong position_id;
    string symbol;
-   long type;
-   double entry_price;
-   double exit_price;
-   double volume;
-   double stop_loss;
-   double take_profit;
+   double entry_price_sum;
+   double entry_volume;
+   double exit_price_sum;
+   double exit_volume;
    double pnl;
    datetime opened_at;
    datetime closed_at;
    long magic;
    string comment;
+   double stop_loss;
+   double take_profit;
+   long entry_type;
+   bool has_entry;
+   bool has_reversal;
+   bool has_exit_by;
 };
 
 string JsonEscape(string value)
 {
    StringReplace(value, "\\", "\\\\");
-   StringReplace(value, """, "\\"");
+   StringReplace(value, "\"", "\\\"");
    StringReplace(value, "\r", "\\r");
    StringReplace(value, "\n", "\\n");
+   StringReplace(value, "\t", "\\t");
    return value;
 }
 
@@ -41,16 +46,53 @@ string IsoTime(datetime value)
 
 string Side(long deal_type)
 {
-   return deal_type == DEAL_TYPE_SELL ? "SHORT" : "LONG";
+   if(deal_type == DEAL_TYPE_SELL)
+      return "SHORT";
+   return "LONG";
+}
+
+bool IsPlaceholder(string value)
+{
+   return value == "" ||
+          value == "CHANGE_ME" ||
+          value == "YOUR_ACCOUNT_ID" ||
+          StringFind(value, "YOUR-TRADEVAULT-DOMAIN") >= 0;
 }
 
 int OnInit()
 {
-   if(SyncIntervalSeconds < 10)
-      EventSetTimer(10);
-   else
-      EventSetTimer(SyncIntervalSeconds);
+   if(IsPlaceholder(SyncUrl))
+   {
+      Print("TradeVault: configure SyncUrl before starting the EA.");
+      return(INIT_PARAMETERS_INCORRECT);
+   }
 
+   if(IsPlaceholder(SyncToken))
+   {
+      Print("TradeVault: configure SyncToken before starting the EA.");
+      return(INIT_PARAMETERS_INCORRECT);
+   }
+
+   if(IsPlaceholder(TradeVaultAccountId))
+   {
+      Print("TradeVault: configure TradeVaultAccountId before starting the EA.");
+      return(INIT_PARAMETERS_INCORRECT);
+   }
+
+   if(LookbackDays < 1)
+   {
+      Print("TradeVault: LookbackDays must be at least 1.");
+      return(INIT_PARAMETERS_INCORRECT);
+   }
+
+   int interval = SyncIntervalSeconds < 10 ? 10 : SyncIntervalSeconds;
+   if(!EventSetTimer(interval))
+   {
+      Print("TradeVault: EventSetTimer failed. Error=", GetLastError());
+      return(INIT_FAILED);
+   }
+
+   Print("TradeVault: initialized. Read-only mode; no trading operations are performed.");
    SyncClosedPositions();
    return(INIT_SUCCEEDED);
 }
@@ -65,10 +107,20 @@ void OnTimer()
    SyncClosedPositions();
 }
 
+int FindPosition(PositionSummary &positions[], int count, ulong position_id)
+{
+   for(int i = 0; i < count; i++)
+   {
+      if(positions[i].position_id == position_id)
+         return i;
+   }
+   return -1;
+}
+
 void SyncClosedPositions()
 {
-   datetime from = TimeCurrent() - (LookbackDays * 86400);
    datetime to = TimeCurrent();
+   datetime from = to - (LookbackDays * 86400);
 
    if(!HistorySelect(from, to))
    {
@@ -83,6 +135,7 @@ void SyncClosedPositions()
    PositionSummary positions[];
    int position_count = 0;
 
+   // First pass: discover positions with closing activity in the lookback window.
    for(int i = 0; i < total; i++)
    {
       ulong deal = HistoryDealGetTicket(i);
@@ -97,107 +150,155 @@ void SyncClosedPositions()
       if(entry != DEAL_ENTRY_OUT && entry != DEAL_ENTRY_OUT_BY)
          continue;
 
-      int index = -1;
-      for(int p = 0; p < position_count; p++)
-      {
-         if(positions[p].position_id == position_id)
-         {
-            index = p;
-            break;
-         }
-      }
+      int index = FindPosition(positions, position_count, position_id);
+      if(index >= 0)
+         continue;
 
-      if(index < 0)
-      {
-         ArrayResize(positions, position_count + 1);
-         index = position_count++;
-         ZeroMemory(positions[index]);
-         positions[index].position_id = position_id;
-         positions[index].symbol = HistoryDealGetString(deal, DEAL_SYMBOL);
-         positions[index].exit_price = 0.0;
-         positions[index].volume = 0.0;
-         positions[index].pnl = 0.0;
-         positions[index].closed_at = 0;
-      }
+      ArrayResize(positions, position_count + 1);
+      index = position_count++;
+      ZeroMemory(positions[index]);
 
-      double volume = HistoryDealGetDouble(deal, DEAL_VOLUME);
-      double price = HistoryDealGetDouble(deal, DEAL_PRICE);
-      double profit = HistoryDealGetDouble(deal, DEAL_PROFIT);
-      double commission = HistoryDealGetDouble(deal, DEAL_COMMISSION);
-      double swap = HistoryDealGetDouble(deal, DEAL_SWAP);
-      datetime deal_time = (datetime)HistoryDealGetInteger(deal, DEAL_TIME);
-
-      positions[index].exit_price += price * volume;
-      positions[index].volume += volume;
-      positions[index].pnl += profit + commission + swap;
-
-      if(deal_time > positions[index].closed_at)
-         positions[index].closed_at = deal_time;
-
-      if(positions[index].comment == "")
-         positions[index].comment = HistoryDealGetString(deal, DEAL_COMMENT);
-
-      if(positions[index].magic == 0)
-         positions[index].magic = HistoryDealGetInteger(deal, DEAL_MAGIC);
+      positions[index].position_id = position_id;
+      positions[index].symbol = HistoryDealGetString(deal, DEAL_SYMBOL);
+      positions[index].entry_type = DEAL_TYPE_BUY;
    }
+
+   if(position_count == 0)
+      return;
 
    string trades = "";
    int synced_count = 0;
+   int skipped_complex = 0;
+   int skipped_incomplete = 0;
 
    for(int p = 0; p < position_count; p++)
    {
       ulong position_id = positions[p].position_id;
-      if(position_id == 0 || positions[p].closed_at == 0 || positions[p].volume <= 0)
+
+      // Select the complete lifecycle of this position. This avoids losing the
+      // opening deal when a position was held longer than LookbackDays.
+      ResetLastError();
+      if(!HistorySelectByPosition(position_id))
+      {
+         Print("TradeVault: HistorySelectByPosition failed for position ",
+               IntegerToString((long)position_id),
+               ". Error=", GetLastError());
+         skipped_incomplete++;
          continue;
-
-      double weighted_exit = positions[p].exit_price / positions[p].volume;
-
-      // Find the original opening deal for this position.
-      datetime opened_at = 0;
-      double entry_price = 0.0;
-      double entry_volume = 0.0;
-      long entry_type = DEAL_TYPE_BUY;
-      double stop_loss = 0.0;
-      double take_profit = 0.0;
-      long magic = positions[p].magic;
-      string comment = positions[p].comment;
+      }
 
       int deals = HistoryDealsTotal();
+      if(deals <= 0)
+      {
+         skipped_incomplete++;
+         continue;
+      }
+
       for(int i = 0; i < deals; i++)
       {
          ulong deal = HistoryDealGetTicket(i);
          if(deal == 0)
             continue;
 
-         if((ulong)HistoryDealGetInteger(deal, DEAL_POSITION_ID) != position_id)
-            continue;
-
          ENUM_DEAL_ENTRY entry = (ENUM_DEAL_ENTRY)HistoryDealGetInteger(deal, DEAL_ENTRY);
-         if(entry != DEAL_ENTRY_IN)
-            continue;
-
+         long deal_type = HistoryDealGetInteger(deal, DEAL_TYPE);
          datetime deal_time = (datetime)HistoryDealGetInteger(deal, DEAL_TIME);
-         entry_type = HistoryDealGetInteger(deal, DEAL_TYPE);
-         entry_price = HistoryDealGetDouble(deal, DEAL_PRICE);
-         entry_volume = HistoryDealGetDouble(deal, DEAL_VOLUME);
-         stop_loss = HistoryDealGetDouble(deal, DEAL_SL);
-         take_profit = HistoryDealGetDouble(deal, DEAL_TP);
-         magic = HistoryDealGetInteger(deal, DEAL_MAGIC);
-         comment = HistoryDealGetString(deal, DEAL_COMMENT);
+         double volume = HistoryDealGetDouble(deal, DEAL_VOLUME);
+         double price = HistoryDealGetDouble(deal, DEAL_PRICE);
+         double profit = HistoryDealGetDouble(deal, DEAL_PROFIT);
+         double commission = HistoryDealGetDouble(deal, DEAL_COMMISSION);
+         double swap = HistoryDealGetDouble(deal, DEAL_SWAP);
 
-         if(opened_at == 0 || deal_time < opened_at)
-            opened_at = deal_time;
+         // Include all position-level P&L components, including opening
+         // commissions, so the journal matches MT5's net result.
+         positions[p].pnl += profit + commission + swap;
+
+         if(positions[p].symbol == "")
+            positions[p].symbol = HistoryDealGetString(deal, DEAL_SYMBOL);
+
+         long magic = HistoryDealGetInteger(deal, DEAL_MAGIC);
+         string comment = HistoryDealGetString(deal, DEAL_COMMENT);
+
+         if(magic != 0)
+            positions[p].magic = magic;
+         if(comment != "")
+            positions[p].comment = comment;
+
+         if(entry == DEAL_ENTRY_IN)
+         {
+            if(!positions[p].has_entry)
+            {
+               positions[p].entry_type = deal_type;
+               positions[p].stop_loss = HistoryDealGetDouble(deal, DEAL_SL);
+               positions[p].take_profit = HistoryDealGetDouble(deal, DEAL_TP);
+               positions[p].opened_at = deal_time;
+               positions[p].has_entry = true;
+            }
+            else if(deal_time < positions[p].opened_at)
+            {
+               positions[p].entry_type = deal_type;
+               positions[p].opened_at = deal_time;
+               positions[p].stop_loss = HistoryDealGetDouble(deal, DEAL_SL);
+               positions[p].take_profit = HistoryDealGetDouble(deal, DEAL_TP);
+            }
+
+            // Weighted-average entry price across all opening deals.
+            positions[p].entry_price_sum += price * volume;
+            positions[p].entry_volume += volume;
+         }
+         else if(entry == DEAL_ENTRY_INOUT)
+         {
+            // A reversal cannot be represented safely as one simple TradeVault
+            // position because it contains both closing and opening activity.
+            positions[p].has_reversal = true;
+         }
+         else if(entry == DEAL_ENTRY_OUT || entry == DEAL_ENTRY_OUT_BY)
+         {
+            positions[p].exit_price_sum += price * volume;
+            positions[p].exit_volume += volume;
+
+            if(deal_time > positions[p].closed_at)
+               positions[p].closed_at = deal_time;
+
+            if(entry == DEAL_ENTRY_OUT_BY)
+               positions[p].has_exit_by = true;
+         }
       }
 
-      if(opened_at == 0 || entry_price <= 0)
+      if(positions[p].has_reversal)
+      {
+         skipped_complex++;
+         Print("TradeVault: skipping complex reversal position ",
+               IntegerToString((long)position_id),
+               " rather than creating an inaccurate journal record.");
          continue;
+      }
+
+      if(!positions[p].has_entry ||
+         positions[p].entry_volume <= 0 ||
+         positions[p].exit_volume <= 0 ||
+         positions[p].closed_at == 0 ||
+         positions[p].entry_price_sum <= 0)
+      {
+         skipped_incomplete++;
+         Print("TradeVault: skipping incomplete position ",
+               IntegerToString((long)position_id));
+         continue;
+      }
+
+      double weighted_entry = positions[p].entry_price_sum / positions[p].entry_volume;
+      double weighted_exit = positions[p].exit_price_sum / positions[p].exit_volume;
 
       string strategy = "MT5";
-      if(magic != 0)
-         strategy = "MT5 Magic " + IntegerToString(magic);
+      if(positions[p].magic != 0)
+         strategy = "MT5 Magic " + IntegerToString(positions[p].magic);
 
-      if(comment != "")
-         strategy += " | " + comment;
+      if(positions[p].comment != "")
+         strategy += " | " + positions[p].comment;
+
+      string notes = "MT5 position " + IntegerToString((long)position_id);
+      if(positions[p].has_exit_by)
+         notes += " | close-by";
 
       if(synced_count > 0)
          trades += ",";
@@ -206,16 +307,16 @@ void SyncClosedPositions()
       trades += "\"externalId\":\"position:" + IntegerToString((long)position_id) + "\",";
       trades += "\"positionId\":\"" + IntegerToString((long)position_id) + "\",";
       trades += "\"symbol\":\"" + JsonEscape(positions[p].symbol) + "\",";
-      trades += "\"side\":\"" + Side(entry_type) + "\",";
+      trades += "\"side\":\"" + Side(positions[p].entry_type) + "\",";
       trades += "\"pnl\":" + DoubleToString(positions[p].pnl, 8) + ",";
-      trades += "\"entryPrice\":" + DoubleToString(entry_price, 8) + ",";
+      trades += "\"entryPrice\":" + DoubleToString(weighted_entry, 8) + ",";
       trades += "\"exitPrice\":" + DoubleToString(weighted_exit, 8) + ",";
-      trades += "\"volume\":" + DoubleToString(entry_volume > 0 ? entry_volume : positions[p].volume, 4) + ",";
-      trades += "\"stopLoss\":" + DoubleToString(stop_loss, 8) + ",";
-      trades += "\"takeProfit\":" + DoubleToString(take_profit, 8) + ",";
+      trades += "\"volume\":" + DoubleToString(positions[p].entry_volume, 4) + ",";
+      trades += "\"stopLoss\":" + DoubleToString(positions[p].stop_loss, 8) + ",";
+      trades += "\"takeProfit\":" + DoubleToString(positions[p].take_profit, 8) + ",";
       trades += "\"strategy\":\"" + JsonEscape(strategy) + "\",";
-      trades += "\"notes\":\"MT5 position " + IntegerToString((long)position_id) + "\",";
-      trades += "\"openedAt\":\"" + IsoTime(opened_at) + "\",";
+      trades += "\"notes\":\"" + JsonEscape(notes) + "\",";
+      trades += "\"openedAt\":\"" + IsoTime(positions[p].opened_at) + "\",";
       trades += "\"closedAt\":\"" + IsoTime(positions[p].closed_at) + "\"";
       trades += "}";
 
@@ -223,9 +324,17 @@ void SyncClosedPositions()
    }
 
    if(synced_count == 0)
+   {
+      Print("TradeVault: no complete non-reversal positions ready to sync. ",
+            "Skipped complex=", skipped_complex,
+            ", incomplete=", skipped_incomplete);
       return;
+   }
 
-   string body = "{\"accountId\":\"" + JsonEscape(TradeVaultAccountId) + "\",\"trades\":[" + trades + "]}";
+   string body = "{\"accountId\":\"" +
+                 JsonEscape(TradeVaultAccountId) +
+                 "\",\"trades\":[" + trades + "]}";
+
    SendToTradeVault(body);
 }
 
@@ -237,7 +346,10 @@ void SendToTradeVault(string body)
 
    StringToCharArray(body, data, 0, StringLen(body), CP_UTF8);
 
-   string headers = "Content-Type: application/json\r\nAuthorization: Bearer " + SyncToken + "\r\n";
+   string headers =
+      "Content-Type: application/json\r\n" +
+      "Authorization: Bearer " + SyncToken + "\r\n";
+
    ResetLastError();
 
    int status = WebRequest(
@@ -257,12 +369,14 @@ void SendToTradeVault(string body)
       return;
    }
 
+   string response = CharArrayToString(result);
+
    if(status < 200 || status >= 300)
    {
-      Print("TradeVault: HTTP ", status, " response=", CharArrayToString(result));
+      Print("TradeVault: HTTP ", status, " response=", response);
       return;
    }
 
    Print("TradeVault: sync successful. HTTP ", status,
-         " response=", CharArrayToString(result));
+         " response=", response);
 }
