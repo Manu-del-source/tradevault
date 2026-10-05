@@ -6,13 +6,17 @@ POST /api/trades/sync/mt5
 
 It never places, modifies, or closes orders.
 
-## Vercel configuration
+## Account-scoped credentials
 
-Add this environment variable:
+MT5 synchronization uses a **separate credential for each TradingAccount**. There is no shared global MT5 token.
 
-`MT5_SYNC_TOKEN=<long-random-secret>`
+Create a credential for the account through:
 
-Redeploy after adding it.
+POST /api/accounts/<TRADING_ACCOUNT_ID>/mt5-credentials
+
+The response contains the plaintext token once. Store it securely and put it into the EA's `SyncToken` input. TradeVault stores only a SHA-256 hash of the token, so the plaintext cannot be recovered later. Creating a new credential rotates/replaces the previous one; DELETE revokes it.
+
+For the current development build, account management uses the development user configured by `DEV_USER_EMAIL`. Before public launch, these credential-management routes must be protected by the product's real user authentication.
 
 ## MT5 setup
 
