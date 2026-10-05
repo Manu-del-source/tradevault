@@ -138,8 +138,8 @@ function parseMt5Deal(row: Row, rowNumber: number): Mt5Deal | null {
 }
 
 function aggregateMt5Position(deals: Mt5Deal[]) {
-  const entries = deals.filter(isMt5Entry);
-  const exits = deals.filter(isMt5Exit);
+  const entries = deals.filter((deal) => ["in", "entry", "open", "opened"].includes(deal.entry));
+  const exits = deals.filter((deal) => ["out", "out_by", "close", "closed", "exit"].includes(deal.entry));
 
   if (!exits.length) return null;
 
