@@ -226,13 +226,32 @@ function CsvImport({accountId,onClose,onImported}:{accountId:string;onClose:()=>
   async function choose(f:File|null) {
     setFile(f); setErrors([]); setMessage("");
     if(!f) {setRows([]);setHeaders([]);return;}
-    const parsed=parse(await f.text());
+    const text=await f.text();
+    if(source==="DERIV") {
+      try {
+        const payload=JSON.parse(text);
+        const transactions=Array.isArray(payload)
+          ? payload
+          : payload?.profit_table?.transactions ?? payload?.transactions ?? [];
+        if(!Array.isArray(transactions) || !transactions.length) {
+          setHeaders([]); setRows([]); setErrors(["No Deriv profit_table transactions found in this JSON file."]);
+          return;
+        }
+        const previewHeaders=["contract_id","contract_type","underlying_symbol","buy_price","sell_price","purchase_time","transaction_time"];
+        setHeaders(previewHeaders);
+        setRows(transactions.slice(0,100).map((row:any)=>Object.fromEntries(previewHeaders.map(h=>[h,String(row?.[h] ?? "")]))));
+        setErrors([]);
+        return;
+      } catch {
+        setHeaders([]); setRows([]); setErrors(["The selected Deriv file is not valid JSON."]);
+        return;
+      }
+    }
+    const parsed=parse(text);
     setHeaders(parsed.headers); setRows(parsed.rows);
     const missing=[];
     const lower=parsed.headers.map(h=>h.toLowerCase().replace(/[\\s-]+/g,"_"));
-    if(source==="DERIV") {
-      if(!["contract_id","contractid"].some(k=>lower.includes(k))) missing.push("contract_id (JSON import does not use CSV preview)");
-    } else if(!["symbol","instrument","pair"].some(k=>lower.includes(k))) missing.push("symbol / instrument / pair");
+    if(!["symbol","instrument","pair"].some(k=>lower.includes(k))) missing.push("symbol / instrument / pair");
     if(source==="MT5") {
       if(!["deal","deal_id","ticket"].some(k=>lower.includes(k))) missing.push("deal / deal_id / ticket");
       if(!["time","closed_at","close_time","date"].some(k=>lower.includes(k))) missing.push("time / close_time");
