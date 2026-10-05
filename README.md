@@ -57,6 +57,8 @@ DATABASE_URL="postgresql://USER:PASSWORD@HOST:5432/tradevault"
 
 Accepted columns include `symbol`, `side`, `pnl`, `volume`, `strategy`, `session`, `closed_at`, `notes`, plus common MT5 aliases such as `ticket`, `deal_id`, `profit`, and `instrument`.
 
+For MT5 exports, choose **MetaTrader 5** in the import dialog. TradeVault filters for closed deals, maps the closing deal back to the original LONG/SHORT position direction, and combines `Profit + Swap + Commission` into the stored net P&L when those columns are present. MT5 imports are read-only; TradeVault never sends orders to MetaTrader.
+
 ## Roadmap
 
 1. Authentication and user-owned accounts
