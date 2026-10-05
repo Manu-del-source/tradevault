@@ -7,6 +7,7 @@ input string SyncToken = "CHANGE_ME";
 input string TradeVaultAccountId = "YOUR_ACCOUNT_ID";
 input int LookbackDays = 30;
 input int SyncIntervalSeconds = 60;
+input int BrokerUtcOffsetHours = 0; // Example: UTC+2 broker = 2, UTC+3 broker = 3
 
 struct PositionSummary
 {
@@ -41,7 +42,16 @@ string JsonEscape(string value)
 
 string IsoTime(datetime value)
 {
-   return TimeToString(value, TIME_DATE | TIME_SECONDS);
+   // MT5 history timestamps are broker/server time. Convert that server
+   // clock to UTC before sending it to the Vercel/JavaScript API.
+   datetime utc_value = value - (BrokerUtcOffsetHours * 3600);
+   MqlDateTime tm = {};
+   if(!TimeToStruct(utc_value, tm))
+      return "";
+
+   return StringFormat("%04d-%02d-%02dT%02d:%02d:%02dZ",
+                       tm.year, tm.mon, tm.day,
+                       tm.hour, tm.min, tm.sec);
 }
 
 string Side(long deal_type)
@@ -76,6 +86,12 @@ int OnInit()
    if(IsPlaceholder(TradeVaultAccountId))
    {
       Print("TradeVault: configure TradeVaultAccountId before starting the EA.");
+      return(INIT_PARAMETERS_INCORRECT);
+   }
+
+   if(BrokerUtcOffsetHours < -14 || BrokerUtcOffsetHours > 14)
+   {
+      Print("TradeVault: BrokerUtcOffsetHours must be between -14 and +14.");
       return(INIT_PARAMETERS_INCORRECT);
    }
 
