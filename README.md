@@ -74,6 +74,6 @@ For MT5 exports, choose **MetaTrader 5** in the import dialog. TradeVault groups
 
 ### Deriv history import
 
-Deriv's authenticated `profit_table` endpoint provides completed-contract profit/loss history and supports pagination with `limit` and `offset`. TradeVault accepts a saved JSON response from that endpoint through **Deriv JSON** import, stores the Deriv `contract_id` as the stable external identifier, preserves `contract_type`, and calculates contract P&L from `sell_price - buy_price` (falling back to payout only when sell price is absent). Directional contract types are mapped to LONG/SHORT; the contract type itself is retained for analytics.
+Deriv's authenticated `profit_table` endpoint provides completed-contract profit/loss history and supports pagination with `limit` and `offset`. TradeVault accepts a saved JSON response from that endpoint through **Deriv JSON** import, stores the Deriv `contract_id` as the stable external identifier, preserves `contract_type`, and calculates contract P&L from `sell_price - buy_price` (falling back to payout only when sell price is absent). Because these are contract cash values rather than market prices, TradeVault does not put them into the conventional entry/exit price or volume fields; the stake and return are preserved in notes. Directional contract types are mapped to LONG/SHORT; the contract type itself is retained for analytics.
 
 TradeVault records and analyzes trading activity; it does not execute trades.
