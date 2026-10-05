@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { getCurrentUser } from "@/lib/auth";
 
 type Row = Record<string, string>;
 
@@ -201,10 +202,15 @@ function aggregateMt5Position(deals: Mt5Deal[]) {
 
 export async function POST(request: Request) {
   try {
+    const user = await getCurrentUser();
+    if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     const form = await request.formData();
     const accountId = String(form.get("accountId") ?? "");
     const requestedSource = String(form.get("source") ?? "CSV").toUpperCase();
     const file = form.get("file");
+
+    const account = await prisma.tradingAccount.findFirst({ where: { id: accountId, userId: user.id }, select: { id: true } });
+    if (!account) return NextResponse.json({ error: "Account not found" }, { status: 404 });
 
     if (!accountId || !(file instanceof File)) {
       return NextResponse.json(
