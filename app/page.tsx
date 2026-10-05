@@ -98,11 +98,11 @@ export default function LandingPage() {
         <div className="sectionIntro">
           <span className="eyebrow">SIMPLE PRICING</span>
           <h2>Start free. Upgrade when you need more.</h2>
-          <p>Use the journal first. Paid plans will unlock higher limits and advanced integrations as TradeVault grows.</p>
+          <p>Start with the core journal. Pro adds deeper analytics, unlimited history, and read-only broker integrations.</p>
         </div>
         <div className="pricingGrid">
           <div className="priceBlock"><span className="priceLabel">FREE</span><strong>$0</strong><p>For getting your journal started.</p><div className="priceLine">Manual &amp; CSV history</div><div className="priceLine">Core performance review</div><Link href="/signup" className="secondary priceButton">Start free</Link></div>
-          <div className="priceBlock featuredPrice"><span className="priceLabel">PRO</span><strong>Coming soon</strong><p>For traders who need deeper history and integrations.</p><div className="priceLine">Advanced analytics</div><div className="priceLine">MT5 / Deriv integrations</div><div className="priceLine">Higher usage limits</div><Link href="/signup" className="primary priceButton">Join free first<ArrowRight /></Link></div>
+          <div className="priceBlock featuredPrice"><span className="priceLabel">PRO</span><strong>$7<span className="pricePeriod"> / month</span></strong><p>For traders who need deeper history and integrations.</p><div className="priceLine">Everything in Free</div><div className="priceLine">Unlimited trade history</div><div className="priceLine">Advanced analytics</div><div className="priceLine">Strategy &amp; session analysis</div><div className="priceLine">MT5 / Deriv integrations</div><div className="priceLine">Advanced filters</div><span className="secondary priceButton">Payments opening soon</span></div>
         </div>
       </section>
 
