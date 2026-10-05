@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { getCurrentUser } from "@/lib/auth";
 import { TradeSide } from "@prisma/client";
 
 const toDate = (value: string | null) => {
@@ -10,6 +11,8 @@ const toDate = (value: string | null) => {
 
 export async function GET(request: Request) {
   try {
+    const user = await getCurrentUser();
+    if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     const params = new URL(request.url).searchParams;
     const accountId = params.get("accountId");
     if (!accountId) return NextResponse.json({ error: "accountId is required" }, { status: 400 });
@@ -25,6 +28,8 @@ export async function GET(request: Request) {
     const dateFrom = toDate(params.get("dateFrom"));
     const dateTo = toDate(params.get("dateTo"));
 
+    const account = await prisma.tradingAccount.findFirst({ where: { id: accountId, userId: user.id }, select: { id: true } });
+    if (!account) return NextResponse.json({ error: "Account not found" }, { status: 404 });
     const where = {
       accountId,
       ...(q ? { OR: [
@@ -57,6 +62,8 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
+    const user = await getCurrentUser();
+    if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     const body = await request.json();
     const accountId = String(body.accountId ?? "");
     const symbol = String(body.symbol ?? "").trim().toUpperCase();
@@ -64,6 +71,8 @@ export async function POST(request: Request) {
     if (!accountId || !symbol || !Number.isFinite(pnl)) {
       return NextResponse.json({ error: "accountId, symbol and numeric pnl are required" }, { status: 400 });
     }
+    const account = await prisma.tradingAccount.findFirst({ where: { id: accountId, userId: user.id }, select: { id: true } });
+    if (!account) return NextResponse.json({ error: "Account not found" }, { status: 404 });
     const trade = await prisma.trade.create({
       data: {
         accountId, symbol, pnl,
