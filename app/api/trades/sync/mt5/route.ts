@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
@@ -18,6 +19,9 @@ type IncomingTrade = {
   closedAt?: string | null;
 };
 
+const hashToken = (token: string) =>
+  createHash("sha256").update(token, "utf8").digest("hex");
+
 const asDate = (value: string | null | undefined) => {
   if (!value) return null;
   const date = new Date(value);
@@ -26,10 +30,19 @@ const asDate = (value: string | null | undefined) => {
 
 export async function POST(request: Request) {
   try {
-    const expectedToken = process.env.MT5_SYNC_TOKEN;
     const auth = request.headers.get("authorization") ?? "";
+    const [scheme, token] = auth.split(" ");
 
-    if (!expectedToken || auth !== `Bearer ${expectedToken}`) {
+    if (scheme !== "Bearer" || !token) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const credential = await prisma.mt5SyncCredential.findUnique({
+      where: { tokenHash: hashToken(token) },
+      select: { id: true, accountId: true }
+    });
+
+    if (!credential) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -44,19 +57,21 @@ export async function POST(request: Request) {
       );
     }
 
-    const account = await prisma.tradingAccount.findUnique({
-      where: { id: accountId },
-      select: { id: true }
-    });
-
-    if (!account) {
-      return NextResponse.json({ error: "Trading account not found" }, { status: 404 });
+    // The credential is permanently bound to one TradingAccount.
+    // Never allow the caller to use it to write into another account.
+    if (accountId !== credential.accountId) {
+      return NextResponse.json(
+        { error: "Sync credential is not valid for this trading account" },
+        { status: 403 }
+      );
     }
 
     const valid = trades.filter(
       (trade) =>
-        trade.externalId &&
-        trade.symbol &&
+        typeof trade.externalId === "string" &&
+        trade.externalId.trim() &&
+        typeof trade.symbol === "string" &&
+        trade.symbol.trim() &&
         (trade.side === "LONG" || trade.side === "SHORT") &&
         Number.isFinite(Number(trade.pnl))
     );
@@ -67,12 +82,12 @@ export async function POST(request: Request) {
         where: {
           accountId_externalId: {
             accountId,
-            externalId: trade.externalId
+            externalId: trade.externalId.trim()
           }
         },
         create: {
           accountId,
-          externalId: trade.externalId,
+          externalId: trade.externalId.trim(),
           positionId: trade.positionId ?? null,
           symbol: trade.symbol.trim().toUpperCase(),
           side: trade.side,
@@ -107,6 +122,11 @@ export async function POST(request: Request) {
       });
       imported++;
     }
+
+    await prisma.mt5SyncCredential.update({
+      where: { id: credential.id },
+      data: { lastUsedAt: new Date() }
+    });
 
     return NextResponse.json({
       ok: true,
