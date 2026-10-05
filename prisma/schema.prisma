@@ -43,27 +43,29 @@ model TradingAccount {
 }
 
 model Trade {
-  id         String         @id @default(cuid())
-  accountId  String
-  externalId String?
-  symbol     String
-  side       TradeSide
-  pnl        Decimal        @db.Decimal(18, 2)
-  entryPrice Decimal?       @db.Decimal(18, 8)
-  exitPrice  Decimal?       @db.Decimal(18, 8)
-  volume     Decimal?       @db.Decimal(18, 4)
-  stopLoss   Decimal?       @db.Decimal(18, 8)
-  takeProfit Decimal?       @db.Decimal(18, 8)
-  strategy   String?
-  session    String?
-  notes      String?
-  openedAt   DateTime?
-  closedAt   DateTime?
-  source     TradeSource    @default(MANUAL)
-  createdAt  DateTime       @default(now())
-  updatedAt  DateTime       @updatedAt
-  account    TradingAccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  id           String         @id @default(cuid())
+  accountId    String
+  externalId   String?
+  positionId   String?
+  symbol       String
+  side         TradeSide
+  pnl          Decimal        @db.Decimal(18, 2)
+  entryPrice   Decimal?       @db.Decimal(18, 8)
+  exitPrice    Decimal?       @db.Decimal(18, 8)
+  volume       Decimal?       @db.Decimal(18, 4)
+  stopLoss     Decimal?       @db.Decimal(18, 8)
+  takeProfit   Decimal?       @db.Decimal(18, 8)
+  strategy     String?
+  session      String?
+  notes        String?
+  openedAt     DateTime?
+  closedAt     DateTime?
+  source       TradeSource    @default(MANUAL)
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  account      TradingAccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
   @@unique([accountId, externalId])
   @@index([accountId, closedAt])
   @@index([accountId, symbol])
+  @@index([accountId, positionId])
 }
