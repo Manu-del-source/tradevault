@@ -110,6 +110,7 @@ export async function POST(request: Request) {
       return [{
         accountId,
         externalId: get(r, "deal", "id", "ticket", "deal_id") || undefined,
+        positionId: get(r, "position_id", "position") || undefined,
         symbol,
         side,
         pnl,
