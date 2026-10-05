@@ -171,7 +171,7 @@ export default function TradeVaultDashboard() {
       <section className="content">
         <header className="topbar">
           <div><p className="eyebrow">TRADING PERFORMANCE</p><h1>{active}</h1></div>
-          <div className="topActions"><button className="secondary" onClick={() => setImportOpen(true)} disabled={!accountId}><Upload/>Import CSV</button><button className="primary" onClick={() => setModal(true)} disabled={!accountId}><Plus/>Log trade</button></div>
+          <div className="topActions"><a className="secondary" href="/dashboard/connect" style={{display:"inline-flex",alignItems:"center",textDecoration:"none"}}>Connect Deriv</a><button className="secondary" onClick={() => setImportOpen(true)} disabled={!accountId}><Upload/>Import CSV</button><button className="primary" onClick={() => setModal(true)} disabled={!accountId}><Plus/>Log trade</button></div>
         </header>
         {error && <div className="errorBar">{error}<button onClick={() => setError("")}><X size={15}/></button></div>}
         {loading ? <div className="card full loadingState">Loading account data…</div> :
