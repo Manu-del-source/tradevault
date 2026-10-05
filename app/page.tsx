@@ -178,6 +178,12 @@ function Empty({title="No trades yet",text="Log a trade or import account histor
 }
 
 function Dashboard({net,winRate,pf,wins,losses,trades}:{net:number;winRate:number;pf:string;wins:number;losses:number;trades:Trade[]}) {
+  const ordered=[...trades].filter(t=>t.closedAt).sort((a,b)=>new Date(a.closedAt!).getTime()-new Date(b.closedAt!).getTime());
+  let running=0;
+  const equity=ordered.map(t=>{running+=Number(t.pnl)||0;return {id:t.id,value:running,date:t.closedAt!};});
+  const max=Math.max(0,...equity.map(p=>p.value));
+  const min=Math.min(0,...equity.map(p=>p.value));
+  const range=max-min || 1;
   return <><div className="heroGrid">
     <Metric icon={CircleDollarSign} label="Net P&L" value={money(net)} detail="Across logged trades"/>
     <Metric icon={Target} label="Win rate" value={winRate+"%"} detail={wins+" wins · "+losses+" losses"}/>
@@ -186,7 +192,7 @@ function Dashboard({net,winRate,pf,wins,losses,trades}:{net:number;winRate:numbe
   </div>
   <div className="mainGrid">
     <section className="card chartCard"><div className="cardHead"><div><span className="label">EQUITY CURVE</span><h2>{money(net)} <small>net from logged trades</small></h2></div><select><option>All logged trades</option></select></div>
-      {trades.length ? <div className="chart"><div className="chartEmpty">Equity visualization will be added from dated trade history.</div></div> : <div className="chart"><div className="chartEmpty">No equity history yet.</div></div>}
+      {equity.length ? <div className="equityChart" aria-label="Equity curve">{equity.map((point,index)=><div className="equityPoint" key={point.id} title={new Date(point.date).toLocaleString()+": "+money(point.value)}><div className={point.value>=0?"equityBar positive":"equityBar negative"} style={{height: Math.max(8, Math.abs(point.value-min)/range*100)+"%"}}/><span>{index===0 || index===equity.length-1 ? new Date(point.date).toLocaleDateString(undefined,{month:"short",day:"numeric"}) : ""}</span></div>)}</div> : <div className="chart"><div className="chartEmpty">No dated trades yet.</div></div>}
       <div className="chartAxis"><span>First trade</span><span>Current</span></div>
     </section>
     <section className="card"><div className="cardHead"><span className="label">SESSION EDGE</span><Clock3/></div>
