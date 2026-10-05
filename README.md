@@ -57,7 +57,7 @@ DATABASE_URL="postgresql://USER:PASSWORD@HOST:5432/tradevault"
 
 Accepted columns include `symbol`, `side`, `pnl`, `volume`, `strategy`, `session`, `closed_at`, `notes`, plus common MT5 aliases such as `ticket`, `deal_id`, `profit`, and `instrument`.
 
-For MT5 exports, choose **MetaTrader 5** in the import dialog. TradeVault filters for closed deals, maps the closing deal back to the original LONG/SHORT position direction, and combines `Profit + Swap + Commission` into the stored net P&L when those columns are present. MT5 imports are read-only; TradeVault never sends orders to MetaTrader.
+For MT5 exports, choose **MetaTrader 5** in the import dialog. TradeVault groups deals by `position_id`, pairs a normal opening deal with its closing deal(s), preserves the original LONG/SHORT direction, calculates a volume-weighted exit price when multiple exits are present, and combines `Profit + Swap + Commission` across the position into the stored net P&L. Re-importing the same position is protected by a deterministic `position:<position_id>` external ID. Complex positions with multiple opening deals are reported instead of being silently reconstructed. MT5 imports are read-only; TradeVault never sends orders to MetaTrader.
 
 ## Roadmap
 
@@ -65,7 +65,7 @@ For MT5 exports, choose **MetaTrader 5** in the import dialog. TradeVault filter
 2. Account creation/settings
 3. Connect the dashboard and journal to PostgreSQL
 4. CSV import UI with validation/preview
-5. MT5 synchronization service
+5. MT5 position-level reconciliation and synchronization
 6. Deriv synchronization service
 7. Screenshots, tags and trade notes
 8. Real performance analytics
