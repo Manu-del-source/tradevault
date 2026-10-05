@@ -17,6 +17,13 @@ type Trade = {
   session: string | null;
   closedAt: string | null;
   source: string;
+  entryPrice: string | number | null;
+  exitPrice: string | number | null;
+  volume: string | number | null;
+  stopLoss: string | number | null;
+  takeProfit: string | number | null;
+  notes: string | null;
+  openedAt: string | null;
 };
 
 const nav = ["Dashboard", "Journal", "Analytics", "AI Review"];
@@ -40,6 +47,13 @@ export default function Home() {
   const [side, setSide] = useState<"LONG" | "SHORT">("LONG");
   const [strategy, setStrategy] = useState("");
   const [session, setSession] = useState("");
+  const [entryPrice, setEntryPrice] = useState("");
+  const [exitPrice, setExitPrice] = useState("");
+  const [volume, setVolume] = useState("");
+  const [stopLoss, setStopLoss] = useState("");
+  const [takeProfit, setTakeProfit] = useState("");
+  const [notes, setNotes] = useState("");
+  const [selectedTrade, setSelectedTrade] = useState<Trade | null>(null);
 
   async function loadAccounts() {
     const response = await fetch("/api/accounts");
@@ -55,9 +69,10 @@ export default function Home() {
       setTrades([]);
       return;
     }
-    const response = await fetch("/api/trades?accountId=" + encodeURIComponent(id), { cache: "no-store" });
+    const response = await fetch("/api/trades?accountId=" + encodeURIComponent(id) + "&pageSize=100", { cache: "no-store" });
     if (!response.ok) throw new Error("Unable to load trades");
-    setTrades(await response.json());
+    const data = await response.json();
+    setTrades(data.trades ?? []);
   }
 
   useEffect(() => {
@@ -108,6 +123,12 @@ export default function Home() {
           side,
           strategy: strategy || null,
           session: session || null,
+          entryPrice: entryPrice || null,
+          exitPrice: exitPrice || null,
+          volume: volume || null,
+          stopLoss: stopLoss || null,
+          takeProfit: takeProfit || null,
+          notes: notes || null,
           closedAt: new Date().toISOString()
         })
       });
@@ -119,6 +140,12 @@ export default function Home() {
       setPnl("");
       setStrategy("");
       setSession("");
+      setEntryPrice("");
+      setExitPrice("");
+      setVolume("");
+      setStopLoss("");
+      setTakeProfit("");
+      setNotes("");
       setSide("LONG");
     } catch (e) {
       setError(e instanceof Error ? e.message : "Unable to save trade");
@@ -151,7 +178,7 @@ export default function Home() {
         {error && <div className="errorBar">{error}<button onClick={() => setError("")}><X size={15}/></button></div>}
         {loading ? <div className="card full loadingState">Loading account data…</div> :
           active === "Dashboard" ? <Dashboard net={net} winRate={winRate} pf={pf} wins={wins} losses={losses} trades={trades}/> :
-          active === "Journal" ? <Journal query={query} setQuery={setQuery} trades={filtered} onAdd={() => setModal(true)}/> :
+          active === "Journal" ? <Journal query={query} setQuery={setQuery} trades={filtered} onAdd={() => setModal(true)} onSelect={setSelectedTrade}/> :
           active === "Analytics" ? <Analytics trades={trades}/> :
           <AIReview trades={trades}/>}
       </section>
@@ -162,9 +189,18 @@ export default function Home() {
         <label>Direction<select value={side} onChange={e => setSide(e.target.value as "LONG" | "SHORT")}><option value="LONG">Long</option><option value="SHORT">Short</option></select></label>
         <label>P&amp;L ({account?.currency ?? "USD"})<input type="number" step="0.01" placeholder="250.00" value={pnl} onChange={e => setPnl(e.target.value)}/></label>
         <label>Strategy<input placeholder="Liquidity Sweep + FVG" value={strategy} onChange={e => setStrategy(e.target.value)}/></label>
-        <label>Session<select value={session} onChange={e => setSession(e.target.value)}><option value="">Not specified</option><option>Asia</option><option>London</option><option>New York</option></select></label>
+        <div className="formGrid">
+          <label>Entry price<input type="number" step="any" placeholder="2350.50" value={entryPrice} onChange={e => setEntryPrice(e.target.value)}/></label>
+          <label>Exit price<input type="number" step="any" placeholder="2364.20" value={exitPrice} onChange={e => setExitPrice(e.target.value)}/></label>
+          <label>Volume<input type="number" step="any" placeholder="0.10" value={volume} onChange={e => setVolume(e.target.value)}/></label>
+          <label>Stop loss<input type="number" step="any" placeholder="2342.00" value={stopLoss} onChange={e => setStopLoss(e.target.value)}/></label>
+          <label>Take profit<input type="number" step="any" placeholder="2365.00" value={takeProfit} onChange={e => setTakeProfit(e.target.value)}/></label>
+          <label>Session<select value={session} onChange={e => setSession(e.target.value)}><option value="">Not specified</option><option>Asia</option><option>London</option><option>New York</option></select></label>
+        </div>
+        <label>Notes<textarea placeholder="What happened on this trade?" value={notes} onChange={e => setNotes(e.target.value)}/></label>
         <button className="primary wide" onClick={addTrade} disabled={saving}>{saving ? "Saving…" : "Save trade"}</button>
       </div></div>}
+      {selectedTrade && <TradeDrawer trade={selectedTrade} onClose={() => setSelectedTrade(null)} onSaved={trade => { setTrades(current => current.map(t => t.id === trade.id ? trade : t)); setSelectedTrade(trade); }} onDeleted={id => { setTrades(current => current.filter(t => t.id !== id)); setSelectedTrade(null); }}/>}
     </main>
   );
 }
@@ -207,12 +243,76 @@ function Dashboard({net,winRate,pf,wins,losses,trades}:{net:number;winRate:numbe
 
 function Session({n,v,p}:{n:string;v:string;p:string}) { return <div className="session"><div><b>{n}</b><span>{v}</span></div><small>{p}</small></div>; }
 
-function Journal({query,setQuery,trades,onAdd}:{query:string;setQuery:(v:string)=>void;trades:Trade[];onAdd:()=>void}) {
-  return <section className="card full"><div className="journalToolbar"><div className="search"><Search/><input placeholder="Search symbols or strategies..." value={query} onChange={e=>setQuery(e.target.value)}/></div><button className="secondary" onClick={onAdd}><Plus/>Add trade</button></div>{trades.length ? <TradeTable trades={trades}/> : <Empty title={query ? "No matching trades" : "Journal is empty"}/>}</section>;
+function Journal({query,setQuery,trades,onAdd,onSelect}:{query:string;setQuery:(v:string)=>void;trades:Trade[];onAdd:()=>void;onSelect:(t:Trade)=>void}) {
+  const [sideFilter,setSideFilter]=useState("ALL");
+  const [resultFilter,setResultFilter]=useState("ALL");
+  const [sessionFilter,setSessionFilter]=useState("ALL");
+  const [page,setPage]=useState(1);
+  const pageSize=15;
+  const strategies=[...new Set(trades.map(t=>t.strategy).filter(Boolean))] as string[];
+  const filtered=trades.filter(t=>
+    (sideFilter==="ALL" || t.side===sideFilter) &&
+    (resultFilter==="ALL" || (resultFilter==="WIN" ? Number(t.pnl)>0 : resultFilter==="LOSS" ? Number(t.pnl)<0 : Number(t.pnl)===0)) &&
+    (sessionFilter==="ALL" || t.session===sessionFilter)
+  );
+  const pages=Math.max(1,Math.ceil(filtered.length/pageSize));
+  const visible=filtered.slice((page-1)*pageSize,page*pageSize);
+  useEffect(()=>setPage(1),[query,sideFilter,resultFilter,sessionFilter]);
+  return <section className="card full">
+    <div className="journalToolbar">
+      <div className="search"><Search/><input placeholder="Search symbols or strategies..." value={query} onChange={e=>setQuery(e.target.value)}/></div>
+      <div className="filterRow">
+        <select aria-label="Direction filter" value={sideFilter} onChange={e=>setSideFilter(e.target.value)}><option value="ALL">All directions</option><option value="LONG">Long</option><option value="SHORT">Short</option></select>
+        <select aria-label="Result filter" value={resultFilter} onChange={e=>setResultFilter(e.target.value)}><option value="ALL">All results</option><option value="WIN">Wins</option><option value="LOSS">Losses</option><option value="BREAK_EVEN">Break-even</option></select>
+        <select aria-label="Session filter" value={sessionFilter} onChange={e=>setSessionFilter(e.target.value)}><option value="ALL">All sessions</option><option>Asia</option><option>London</option><option>New York</option></select>
+        <button className="secondary" onClick={onAdd}><Plus/>Add trade</button>
+      </div>
+    </div>
+    {visible.length ? <TradeTable trades={visible} onSelect={onSelect}/> : <Empty title={query ? "No matching trades" : "Journal is empty"}/>}
+    {filtered.length>0 && <div className="pagination"><span>{(page-1)*pageSize+1}–{Math.min(page*pageSize,filtered.length)} of {filtered.length}</span><div><button disabled={page===1} onClick={()=>setPage(p=>Math.max(1,p-1))}>Previous</button><b>Page {page} / {pages}</b><button disabled={page===pages} onClick={()=>setPage(p=>Math.min(pages,p+1))}>Next</button></div></div>}
+  </section>;
 }
 
-function TradeTable({trades}:{trades:Trade[]}) {
-  return <div className="tableWrap"><table><thead><tr><th>TRADE</th><th>DIRECTION</th><th>P&amp;L</th><th>STRATEGY</th><th>SESSION</th><th>SOURCE</th></tr></thead><tbody>{trades.map(t=><tr key={t.id}><td><b>{t.symbol}</b><small>{t.closedAt ? new Date(t.closedAt).toLocaleDateString() : "Open"}</small></td><td><span className={t.side === "LONG" ? "pill long" : "pill short"}>{t.side === "LONG" ? "Long" : "Short"}</span></td><td className={Number(t.pnl)>=0 ? "profit" : "loss"}>{money(Number(t.pnl))}</td><td>{t.strategy || "—"}</td><td>{t.session || "—"}</td><td>{t.source}</td></tr>)}</tbody></table></div>;
+function TradeTable({trades,onSelect}:{trades:Trade[];onSelect?:(t:Trade)=>void}) {
+  return <div className="tableWrap"><table><thead><tr><th>TRADE</th><th>DIRECTION</th><th>P&amp;L</th><th>STRATEGY</th><th>SESSION</th><th>SOURCE</th></tr></thead><tbody>{trades.map(t=><tr key={t.id} onClick={()=>onSelect?.(t)} className={onSelect ? "clickableRow" : ""}><td><b>{t.symbol}</b><small>{t.closedAt ? new Date(t.closedAt).toLocaleDateString() : "Open"}</small></td><td><span className={t.side === "LONG" ? "pill long" : "pill short"}>{t.side === "LONG" ? "Long" : "Short"}</span></td><td className={Number(t.pnl)>=0 ? "profit" : "loss"}>{money(Number(t.pnl))}</td><td>{t.strategy || "—"}</td><td>{t.session || "—"}</td><td>{t.source}</td></tr>)}</tbody></table></div>;
+}
+
+function TradeDrawer({trade,onClose,onSaved,onDeleted}:{trade:Trade;onClose:()=>void;onSaved:(t:Trade)=>void;onDeleted:(id:string)=>void}) {
+  const [draft,setDraft]=useState(trade);
+  const [busy,setBusy]=useState(false);
+  const [message,setMessage]=useState("");
+  async function save(){
+    setBusy(true); setMessage("");
+    const response=await fetch("/api/trades/"+trade.id,{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify(draft)});
+    const data=await response.json();
+    if(!response.ok){setMessage(data.error??"Unable to update trade");setBusy(false);return;}
+    onSaved(data); setBusy(false);
+  }
+  async function remove(){
+    if(!window.confirm("Delete this trade permanently?")) return;
+    setBusy(true);
+    const response=await fetch("/api/trades/"+trade.id,{method:"DELETE"});
+    if(!response.ok){const data=await response.json();setMessage(data.error??"Unable to delete trade");setBusy(false);return;}
+    onDeleted(trade.id);
+  }
+  return <div className="drawerOverlay"><aside className="drawer">
+    <div className="drawerHead"><div><span className="label">TRADE DETAIL</span><h2>{draft.symbol}</h2></div><button className="iconBtn" onClick={onClose}><X/></button></div>
+    <div className="drawerGrid">
+      <label>Symbol<input value={draft.symbol} onChange={e=>setDraft({...draft,symbol:e.target.value.toUpperCase()})}/></label>
+      <label>Direction<select value={draft.side} onChange={e=>setDraft({...draft,side:e.target.value as "LONG"|"SHORT"})}><option value="LONG">Long</option><option value="SHORT">Short</option></select></label>
+      <label>P&amp;L<input type="number" step="0.01" value={draft.pnl} onChange={e=>setDraft({...draft,pnl:e.target.value})}/></label>
+      <label>Volume<input type="number" step="any" value={draft.volume ?? ""} onChange={e=>setDraft({...draft,volume:e.target.value})}/></label>
+      <label>Entry<input type="number" step="any" value={draft.entryPrice ?? ""} onChange={e=>setDraft({...draft,entryPrice:e.target.value})}/></label>
+      <label>Exit<input type="number" step="any" value={draft.exitPrice ?? ""} onChange={e=>setDraft({...draft,exitPrice:e.target.value})}/></label>
+      <label>Stop loss<input type="number" step="any" value={draft.stopLoss ?? ""} onChange={e=>setDraft({...draft,stopLoss:e.target.value})}/></label>
+      <label>Take profit<input type="number" step="any" value={draft.takeProfit ?? ""} onChange={e=>setDraft({...draft,takeProfit:e.target.value})}/></label>
+      <label>Strategy<input value={draft.strategy ?? ""} onChange={e=>setDraft({...draft,strategy:e.target.value})}/></label>
+      <label>Session<select value={draft.session ?? ""} onChange={e=>setDraft({...draft,session:e.target.value})}><option value="">Not specified</option><option>Asia</option><option>London</option><option>New York</option></select></label>
+    </div>
+    <label>Notes<textarea value={draft.notes ?? ""} onChange={e=>setDraft({...draft,notes:e.target.value})}/></label>
+    {message && <div className="drawerMessage">{message}</div>}
+    <div className="drawerActions"><button className="dangerBtn" onClick={remove} disabled={busy}>Delete</button><button className="primary" onClick={save} disabled={busy}>{busy ? "Saving…" : "Save changes"}</button></div>
+  </aside></div>;
 }
 
 function Analytics({trades}:{trades:Trade[]}) {
