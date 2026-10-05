@@ -3,7 +3,7 @@
 #property description "TradeVault read-only MT5 history synchronizer"
 
 input string SyncUrl = "https://YOUR-TRADEVAULT-DOMAIN.vercel.app/api/trades/sync/mt5";
-input string SyncToken = "CHANGE_ME";
+input string SyncToken = "tv_mt5_your_account_scoped_token";
 input string TradeVaultAccountId = "YOUR_ACCOUNT_ID";
 input int LookbackDays = 30;
 input int SyncIntervalSeconds = 60;
@@ -64,7 +64,7 @@ string Side(long deal_type)
 bool IsPlaceholder(string value)
 {
    return value == "" ||
-          value == "CHANGE_ME" ||
+          StringFind(value, "tv_mt5_your_account_scoped_token") >= 0 ||
           value == "YOUR_ACCOUNT_ID" ||
           StringFind(value, "YOUR-TRADEVAULT-DOMAIN") >= 0;
 }
