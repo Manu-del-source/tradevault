@@ -17,6 +17,7 @@ export async function GET(request: Request) {
     const pageSize = Math.min(100, Math.max(10, Number(params.get("pageSize") || "25") || 25));
     const q = params.get("q")?.trim() || "";
     const side = params.get("side");
+    const sideFilter = side === "LONG" || side === "SHORT" ? side : undefined;
     const result = params.get("result");
     const strategy = params.get("strategy");
     const session = params.get("session");
@@ -30,7 +31,7 @@ export async function GET(request: Request) {
         { strategy: { contains: q, mode: "insensitive" as const } },
         { session: { contains: q, mode: "insensitive" as const } }
       ] } : {}),
-      ...(side === "LONG" || side === "SHORT" ? { side } : {}),
+      ...(sideFilter ? { side: sideFilter } : {}),
       ...(strategy ? { strategy } : {}),
       ...(session ? { session } : {}),
       ...(result === "WIN" ? { pnl: { gt: 0 } } : result === "LOSS" ? { pnl: { lt: 0 } } : result === "BREAK_EVEN" ? { pnl: 0 } : {}),
