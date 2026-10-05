@@ -266,8 +266,8 @@ export async function POST(request: Request) {
 
       const complexPositions = Array.from(grouped.values())
         .filter((deals) => {
-          const entries = deals.filter(isMt5Entry);
-          const exits = deals.filter(isMt5Exit);
+          const entries = deals.filter((deal) => ["in", "entry", "open", "opened"].includes(deal.entry));
+          const exits = deals.filter((deal) => ["out", "out_by", "close", "closed", "exit"].includes(deal.entry));
           return exits.length > 0 && entries.length !== 1;
         })
         .map((deals) => deals[0].positionId);
