@@ -55,7 +55,7 @@ DATABASE_URL="postgresql://USER:PASSWORD@HOST:5432/tradevault"
 
 `POST /api/trades/import` using multipart form data with `accountId` and `file`.
 
-Accepted columns include `symbol`, `side`, `pnl`, `volume`, `strategy`, `session`, `closed_at`, `notes`, plus common MT5 aliases such as `ticket`, `deal_id`, `profit`, and `instrument`.
+Accepted generic CSV columns include `symbol`, `side`, `pnl`, `volume`, `strategy`, `session`, `closed_at`, `notes`. MT5 imports use the broker history fields described below. Deriv history can be imported as the JSON response from the authenticated `profit_table` endpoint.
 
 For MT5 exports, choose **MetaTrader 5** in the import dialog. TradeVault groups deals by `position_id`, pairs a normal opening deal with its closing deal(s), preserves the original LONG/SHORT direction, calculates a volume-weighted exit price when multiple exits are present, and combines `Profit + Swap + Commission` across the position into the stored net P&L. Re-importing the same position is protected by a deterministic `position:<position_id>` external ID. Complex positions with multiple opening deals are reported instead of being silently reconstructed. MT5 imports are read-only; TradeVault never sends orders to MetaTrader.
 
@@ -71,5 +71,9 @@ For MT5 exports, choose **MetaTrader 5** in the import dialog. TradeVault groups
 8. Real performance analytics
 9. AI-generated trading reviews
 10. Background sync jobs and alerts
+
+### Deriv history import
+
+Deriv's authenticated `profit_table` endpoint provides completed-contract profit/loss history and supports pagination with `limit` and `offset`. TradeVault accepts a saved JSON response from that endpoint through **Deriv JSON** import, stores the Deriv `contract_id` as the stable external identifier, preserves `contract_type`, and calculates contract P&L from `sell_price - buy_price` (falling back to payout only when sell price is absent). Directional contract types are mapped to LONG/SHORT; the contract type itself is retained for analytics. citeturn0search2
 
 TradeVault records and analyzes trading activity; it does not execute trades.
