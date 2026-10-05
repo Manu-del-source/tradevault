@@ -28,6 +28,7 @@ model User {
   updatedAt    DateTime  @updatedAt
   accounts     TradingAccount[]
   sessions     Session[]
+  oauthStates  DerivOAuthState[]
 }
 
 model Session {
@@ -37,6 +38,19 @@ model Session {
   expiresAt DateTime
   createdAt DateTime @default(now())
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+model DerivOAuthState {
+  id                String   @id @default(cuid())
+  state             String   @unique
+  userId            String
+  accountId         String
+  codeVerifier      String
+  expiresAt         DateTime
+  createdAt         DateTime @default(now())
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   @@index([userId])
   @@index([expiresAt])
 }
@@ -53,7 +67,22 @@ model TradingAccount {
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   trades    Trade[]
   mt5SyncCredential Mt5SyncCredential?
+  derivCredential DerivOAuthCredential?
   @@index([userId])
+}
+
+model DerivOAuthCredential {
+  id                 String         @id @default(cuid())
+  accountId          String         @unique
+  derivAccountId     String
+  accessToken        String
+  refreshToken       String?
+  expiresAt          DateTime?
+  lastSyncAt         DateTime?
+  createdAt          DateTime       @default(now())
+  updatedAt          DateTime       @updatedAt
+  account            TradingAccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  @@index([derivAccountId])
 }
 
 model Mt5SyncCredential {
