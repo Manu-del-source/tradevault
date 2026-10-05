@@ -376,3 +376,55 @@ function Journal({accountId,onAdd,onSelect}:{accountId:string;onAdd:()=>void;onS
   </section>;
 }
 
+function TradeTable({trades,onSelect}:{trades:Trade[];onSelect?:(t:Trade)=>void}) {
+  return <div className="tableWrap"><table><thead><tr><th>TRADE</th><th>DIRECTION</th><th>P&amp;L</th><th>STRATEGY</th><th>SESSION</th><th>SOURCE</th></tr></thead><tbody>{trades.map(t=><tr key={t.id} onClick={()=>onSelect?.(t)} className={onSelect ? "clickableRow" : ""}><td><b>{t.symbol}</b><small>{t.closedAt ? new Date(t.closedAt).toLocaleDateString() : "Open"}</small></td><td><span className={t.side === "LONG" ? "pill long" : "pill short"}>{t.side === "LONG" ? "Long" : "Short"}</span></td><td className={Number(t.pnl)>=0 ? "profit" : "loss"}>{money(Number(t.pnl))}</td><td>{t.strategy || "—"}</td><td>{t.session || "—"}</td><td>{t.source}</td></tr>)}</tbody></table></div>;
+}
+
+function TradeDrawer({trade,onClose,onSaved,onDeleted}:{trade:Trade;onClose:()=>void;onSaved:(t:Trade)=>void;onDeleted:(id:string)=>void}) {
+  const [draft,setDraft]=useState(trade);
+  const [busy,setBusy]=useState(false);
+  const [message,setMessage]=useState("");
+  async function save(){
+    setBusy(true); setMessage("");
+    const response=await fetch("/api/trades/"+trade.id,{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify(draft)});
+    const data=await response.json();
+    if(!response.ok){setMessage(data.error??"Unable to update trade");setBusy(false);return;}
+    onSaved(data); setBusy(false);
+  }
+  async function remove(){
+    if(!window.confirm("Delete this trade permanently?")) return;
+    setBusy(true);
+    const response=await fetch("/api/trades/"+trade.id,{method:"DELETE"});
+    if(!response.ok){const data=await response.json();setMessage(data.error??"Unable to delete trade");setBusy(false);return;}
+    onDeleted(trade.id);
+  }
+  return <div className="drawerOverlay"><aside className="drawer">
+    <div className="drawerHead"><div><span className="label">TRADE DETAIL</span><h2>{draft.symbol}</h2></div><button className="iconBtn" onClick={onClose}><X/></button></div>
+    <div className="drawerGrid">
+      <label>Symbol<input value={draft.symbol} onChange={e=>setDraft({...draft,symbol:e.target.value.toUpperCase()})}/></label>
+      <label>Direction<select value={draft.side} onChange={e=>setDraft({...draft,side:e.target.value as "LONG"|"SHORT"})}><option value="LONG">Long</option><option value="SHORT">Short</option></select></label>
+      <label>P&amp;L<input type="number" step="0.01" value={draft.pnl} onChange={e=>setDraft({...draft,pnl:e.target.value})}/></label>
+      <label>Volume<input type="number" step="any" value={draft.volume ?? ""} onChange={e=>setDraft({...draft,volume:e.target.value})}/></label>
+      <label>Entry<input type="number" step="any" value={draft.entryPrice ?? ""} onChange={e=>setDraft({...draft,entryPrice:e.target.value})}/></label>
+      <label>Exit<input type="number" step="any" value={draft.exitPrice ?? ""} onChange={e=>setDraft({...draft,exitPrice:e.target.value})}/></label>
+      <label>Stop loss<input type="number" step="any" value={draft.stopLoss ?? ""} onChange={e=>setDraft({...draft,stopLoss:e.target.value})}/></label>
+      <label>Take profit<input type="number" step="any" value={draft.takeProfit ?? ""} onChange={e=>setDraft({...draft,takeProfit:e.target.value})}/></label>
+      <label>Strategy<input value={draft.strategy ?? ""} onChange={e=>setDraft({...draft,strategy:e.target.value})}/></label>
+      <label>Session<select value={draft.session ?? ""} onChange={e=>setDraft({...draft,session:e.target.value})}><option value="">Not specified</option><option>Asia</option><option>London</option><option>New York</option></select></label>
+    </div>
+    <label>Notes<textarea value={draft.notes ?? ""} onChange={e=>setDraft({...draft,notes:e.target.value})}/></label>
+    {message && <div className="drawerMessage">{message}</div>}
+    <div className="drawerActions"><button className="dangerBtn" onClick={remove} disabled={busy}>Delete</button><button className="primary" onClick={save} disabled={busy}>{busy ? "Saving…" : "Save changes"}</button></div>
+  </aside></div>;
+}
+
+function Analytics({trades}:{trades:Trade[]}) {
+  const names=[...new Set(trades.map(t=>t.strategy).filter(Boolean))] as string[];
+  return <div className="analyticsGrid"><section className="card"><span className="label">BY STRATEGY</span>{names.length ? names.map(s=>{const ts=trades.filter(t=>t.strategy===s),p=ts.reduce((a,t)=>a+Number(t.pnl),0);return <div className="analyticRow" key={s}><div><b>{s}</b><small>{ts.length} trades</small></div><strong className={p>=0?"profit":"loss"}>{money(p)}</strong></div>}) : <Empty/>}</section><section className="card"><span className="label">DIRECTIONAL BIAS</span>{trades.length ? <div className="bias">{["LONG","SHORT"].map(side=>{const ts=trades.filter(t=>t.side===side),p=ts.reduce((a,t)=>a+Number(t.pnl),0),pct=Math.round(ts.length/trades.length*100);return <div key={side}>{side==="LONG"?<TrendingUp/>:<TrendingDown/>}<b>{side==="LONG"?"Long":"Short"}</b><strong className={p>=0?"profit":"loss"}>{money(p)}</strong><small>{pct}% of trades · {ts.length} {ts.length===1?"trade":"trades"}</small></div>})}</div> : <Empty/>}</section></div>;
+}
+
+function AIReview({trades}:{trades:Trade[]}) {
+  return <div className="aiPage"><section className="aiHero"><div className="aiIcon"><Bot/></div><div><span className="label">TRADEVAULT AI</span><h2>Analysis will follow the data.</h2><p>{trades.length} logged trades are available. The review engine will wait for sufficient history before making performance claims.</p></div></section><div className="insightGrid"><Insight title="Current sample" text={trades.length+" trades are available for analysis."}/><Insight title="No fabricated conclusions" text="TradeVault will not label a setup your best strategy without enough evidence."/><Insight title="Next input" text="Import more history or connect a broker data source to deepen the review."/></div></div>;
+}
+
+function Insight({title,text}:{title:string;text:string}) { return <div className="card insight"><div className="dot"/><div><b>{title}</b><p>{text}</p></div></div>; }
