@@ -1,23 +1,6 @@
 {
-  "name": "tradevault",
-  "version": "0.1.0",
-  "private": true,
-  "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "lint": "next lint"
-  },
-  "dependencies": {
-    "lucide-react": "^0.468.0",
-    "next": "^16.0.0",
-    "react": "^19.0.0",
-    "react-dom": "^19.0.0"
-  },
-  "devDependencies": {
-    "@types/node": "^22.0.0",
-    "@types/react": "^19.0.0",
-    "@types/react-dom": "^19.0.0",
-    "typescript": "^5.7.0"
-  }
+  "name":"tradevault","version":"0.2.0","private":true,
+  "scripts":{"dev":"next dev","build":"next build","start":"next start","db:generate":"prisma generate","db:push":"prisma db push","db:studio":"prisma studio"},
+  "dependencies":{"@prisma/client":"^6.17.0","lucide-react":"^0.468.0","next":"^16.0.0","prisma":"^6.17.0","react":"^19.0.0","react-dom":"^19.0.0"},
+  "devDependencies":{"@types/node":"^22.0.0","@types/react":"^19.0.0","@types/react-dom":"^19.0.0","typescript":"^5.7.0"}
 }
