@@ -184,6 +184,8 @@ function Dashboard({net,winRate,pf,wins,losses,trades}:{net:number;winRate:numbe
   const max=Math.max(0,...equity.map(p=>p.value));
   const min=Math.min(0,...equity.map(p=>p.value));
   const range=max-min || 1;
+  const points=equity.map((p,i)=>({x:equity.length===1?50:(i/(equity.length-1))*100,y:100-((p.value-min)/range)*90}));
+  const path=points.map((p,i)=>(i===0?"M":"L")+p.x.toFixed(2)+","+p.y.toFixed(2)).join(" ");
   return <><div className="heroGrid">
     <Metric icon={CircleDollarSign} label="Net P&L" value={money(net)} detail="Across logged trades"/>
     <Metric icon={Target} label="Win rate" value={winRate+"%"} detail={wins+" wins · "+losses+" losses"}/>
@@ -192,7 +194,7 @@ function Dashboard({net,winRate,pf,wins,losses,trades}:{net:number;winRate:numbe
   </div>
   <div className="mainGrid">
     <section className="card chartCard"><div className="cardHead"><div><span className="label">EQUITY CURVE</span><h2>{money(net)} <small>net from logged trades</small></h2></div><select><option>All logged trades</option></select></div>
-      {equity.length ? <div className="equityChart" aria-label="Equity curve">{equity.map((point,index)=><div className="equityPoint" key={point.id} title={new Date(point.date).toLocaleString()+": "+money(point.value)}><div className={point.value>=0?"equityBar positive":"equityBar negative"} style={{height: Math.max(8, Math.abs(point.value-min)/range*100)+"%"}}/><span>{index===0 || index===equity.length-1 ? new Date(point.date).toLocaleDateString(undefined,{month:"short",day:"numeric"}) : ""}</span></div>)}</div> : <div className="chart"><div className="chartEmpty">No dated trades yet.</div></div>}
+      {equity.length ? <div className="equityChart" aria-label="Equity curve"><svg viewBox="0 0 100 100" preserveAspectRatio="none"><line x1="0" x2="100" y1={100-((0-min)/range)*90} y2={100-((0-min)/range)*90} className="equityZero"/><path d={path} className="equityPath" vectorEffect="non-scaling-stroke"/></svg><div className="equityLabels"><span>{new Date(equity[0].date).toLocaleDateString(undefined,{month:"short",day:"numeric"})}</span><span>{new Date(equity[equity.length-1].date).toLocaleDateString(undefined,{month:"short",day:"numeric"})}</span></div></div> : <div className="chart"><div className="chartEmpty">No dated trades yet.</div></div>}
       <div className="chartAxis"><span>First trade</span><span>Current</span></div>
     </section>
     <section className="card"><div className="cardHead"><span className="label">SESSION EDGE</span><Clock3/></div>
