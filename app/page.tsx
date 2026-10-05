@@ -17,9 +17,9 @@ export default function LandingPage() {
       </div>
       <div className="terminalPreview">
         <div className="previewTop"><span><i/> LIVE JOURNAL</span><small>PERFORMANCE / OVERVIEW</small></div>
-        <div className="previewMetrics"><div><small>NET P&amp;L</small><b>+$2,486.40</b></div><div><small>WIN RATE</small><b>68%</b></div><div><small>PROFIT FACTOR</small><b>2.14</b></div></div>
+        <div className="previewMetrics"><div><small>NET P&amp;L</small><b>Calculated</b></div><div><small>WIN RATE</small><b>From history</b></div><div><small>PROFIT FACTOR</small><b>From history</b></div></div>
         <div className="previewChart"><div className="chartLine"/></div>
-        <div className="previewRows"><div><span>XAUUSD · LONG</span><b>+$284.00</b></div><div><span>EURUSD · SHORT</span><b>+$126.50</b></div><div><span>NAS100 · LONG</span><b className="loss">-$72.00</b></div></div>
+        <div className="previewRows"><div><span>Imported trade history</span><b>Recorded</b></div><div><span>Strategy attribution</span><b>Available</b></div><div><span>Session analysis</span><b>Available</b></div></div>
       </div>
     </section>
     <section id="features" className="landingSection">
