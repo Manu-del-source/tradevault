@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { TradeSide } from "@prisma/client";
 
 const toDate = (value: string | null) => {
   if (!value) return null;
@@ -17,7 +18,7 @@ export async function GET(request: Request) {
     const pageSize = Math.min(100, Math.max(10, Number(params.get("pageSize") || "25") || 25));
     const q = params.get("q")?.trim() || "";
     const side = params.get("side");
-    const sideFilter = side === "LONG" || side === "SHORT" ? side : undefined;
+    const sideFilter: TradeSide | undefined = side === "LONG" || side === "SHORT" ? side : undefined;
     const result = params.get("result");
     const strategy = params.get("strategy");
     const session = params.get("session");
