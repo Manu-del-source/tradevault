@@ -2,28 +2,72 @@
 
 TradeVault is an automated trading journal and performance analytics platform.
 
-## Current MVP
-- Dashboard with P&L, win rate, profit factor and equity view
-- Searchable trading journal
-- Manual trade logging
-- Strategy and directional analytics
-- AI review interface
-- Broker-sync-ready architecture
+## Current foundation
 
-## Run locally
+- Next.js App Router + TypeScript
+- Dark trading-terminal dashboard
+- Journal, analytics and AI review screens
+- Prisma/PostgreSQL domain model
+- Persistent trading accounts and trades
+- Manual trade CRUD API
+- CSV trade import API
+- Broker-ready source types for MT5 and Deriv
+
+## Database setup
+
+Copy `.env.example` to `.env.local`, set a PostgreSQL connection string, then run:
 
 ```bash
 npm install
+npx prisma generate
+npx prisma db push
 npm run dev
 ```
 
-Open http://localhost:3000.
+The application expects:
+
+```env
+DATABASE_URL="postgresql://USER:PASSWORD@HOST:5432/tradevault"
+```
+
+## API
+
+### Create a trade
+
+`POST /api/trades`
+
+```json
+{
+  "accountId": "account_id",
+  "symbol": "XAUUSD",
+  "side": "LONG",
+  "pnl": 250,
+  "strategy": "Liquidity Sweep + FVG",
+  "session": "London"
+}
+```
+
+### List trades
+
+`GET /api/trades?accountId=account_id`
+
+### Import CSV
+
+`POST /api/trades/import` using multipart form data with `accountId` and `file`.
+
+Accepted columns include `symbol`, `side`, `pnl`, `volume`, `strategy`, `session`, `closed_at`, `notes`, plus common MT5 aliases such as `ticket`, `deal_id`, `profit`, and `instrument`.
 
 ## Roadmap
-1. PostgreSQL + Prisma persistence
-2. Authentication and multi-account support
-3. CSV import
-4. MT5/Deriv synchronization
-5. Screenshot attachments
-6. Automated analytics and AI reviews
-7. Background broker sync jobs
+
+1. Authentication and user-owned accounts
+2. Account creation/settings
+3. Connect the dashboard and journal to PostgreSQL
+4. CSV import UI with validation/preview
+5. MT5 synchronization service
+6. Deriv synchronization service
+7. Screenshots, tags and trade notes
+8. Real performance analytics
+9. AI-generated trading reviews
+10. Background sync jobs and alerts
+
+TradeVault records and analyzes trading activity; it does not execute trades.
