@@ -85,7 +85,9 @@ export async function POST(request: Request) {
     const data = rows.flatMap((r, index) => {
       const symbol = get(r, "symbol", "instrument", "pair").toUpperCase();
       const rawType = get(r, "side", "direction", "type").toLowerCase();
-      const side = rawType.includes("sell") || rawType === "short" ? "SHORT" as const : "LONG" as const;
+      const side = mt5
+        ? (rawType.includes("sell") ? "LONG" as const : "SHORT" as const)
+        : (rawType.includes("sell") || rawType === "short" ? "SHORT" as const : "LONG" as const);
 
       if (mt5 && !isMt5Exit(r)) {
         skipped.push(index + 2);
