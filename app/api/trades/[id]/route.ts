@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { getCurrentUser } from "@/lib/auth";
 
 const parseNumber = (value: unknown) => {
   if (value === null || value === undefined || value === "") return null;
@@ -15,6 +16,8 @@ const parseDate = (value: unknown) => {
 
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const user = await getCurrentUser();
+    if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     const { id } = await params;
     const body = await request.json();
     const data: Record<string, unknown> = {};
@@ -36,6 +39,8 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
       if (body[key] !== undefined) data[key] = parseDate(body[key]);
     }
 
+    const owned = await prisma.trade.findFirst({ where: { id, account: { userId: user.id } }, select: { id: true } });
+    if (!owned) return NextResponse.json({ error: "Trade not found" }, { status: 404 });
     const trade = await prisma.trade.update({ where: { id }, data });
     return NextResponse.json(trade);
   } catch {
@@ -45,7 +50,11 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
 
 export async function DELETE(_request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const user = await getCurrentUser();
+    if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     const { id } = await params;
+    const owned = await prisma.trade.findFirst({ where: { id, account: { userId: user.id } }, select: { id: true } });
+    if (!owned) return NextResponse.json({ error: "Trade not found" }, { status: 404 });
     await prisma.trade.delete({ where: { id } });
     return NextResponse.json({ ok: true });
   } catch {
