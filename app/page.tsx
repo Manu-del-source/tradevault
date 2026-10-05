@@ -227,15 +227,19 @@ function CsvImport({accountId,onClose,onImported}:{accountId:string;onClose:()=>
     const parsed=parse(await f.text());
     setHeaders(parsed.headers); setRows(parsed.rows);
     const missing=[];
-    const lower=parsed.headers.map(h=>h.toLowerCase());
+    const lower=parsed.headers.map(h=>h.toLowerCase().replace(/[\\s-]+/g,"_"));
     if(!["symbol","instrument","pair"].some(k=>lower.includes(k))) missing.push("symbol / instrument / pair");
-    if(!["pnl","profit","profit_loss"].some(k=>lower.includes(k))) missing.push("pnl / profit / profit_loss");
+    if(source==="MT5") {
+      if(!["deal","deal_id","ticket"].some(k=>lower.includes(k))) missing.push("deal / deal_id / ticket");
+      if(!["time","closed_at","close_time","date"].some(k=>lower.includes(k))) missing.push("time / close_time");
+      if(!["type","side","direction"].some(k=>lower.includes(k))) missing.push("type / direction");
+    } else if(!["pnl","profit","profit_loss"].some(k=>lower.includes(k))) missing.push("pnl / profit / profit_loss");
     setErrors(missing.length ? ["Required columns missing: "+missing.join(", ")] : []);
   }
   async function importFile() {
     if(!file || errors.length) return;
     setBusy(true); setMessage("");
-    const form=new FormData(); form.append("accountId",accountId); form.append("file",file);
+    const form=new FormData(); form.append("accountId",accountId); form.append("source",source); form.append("file",file);
     const response=await fetch("/api/trades/import",{method:"POST",body:form});
     const data=await response.json();
     if(!response.ok){setMessage(data.error??"Import failed");setBusy(false);return;}
@@ -243,8 +247,9 @@ function CsvImport({accountId,onClose,onImported}:{accountId:string;onClose:()=>
     await onImported(); setBusy(false);
   }
   return <div className="overlay"><div className="modal importModal">
-    <div className="modalHead"><div><p className="eyebrow">DATA IMPORT</p><h2>Import CSV</h2></div><button className="iconBtn" onClick={onClose}><X/></button></div>
-    <label className="fileDrop"><Upload/><span><b>{file?.name ?? "Choose a CSV file"}</b><small>Required: symbol and P&amp;L · optional: direction, volume, strategy, session, notes, date</small></span><input type="file" accept=".csv,text/csv" onChange={e=>choose(e.target.files?.[0]??null)}/></label>
+    <div className="modalHead"><div><p className="eyebrow">DATA IMPORT</p><h2>{source==="MT5" ? "Import MT5 history" : "Import CSV"}</h2></div><button className="iconBtn" onClick={onClose}><X/></button></div>
+    <label>Source<select value={source} onChange={e=>{setSource(e.target.value as "CSV"|"MT5");setErrors([]);setMessage("");}}><option value="CSV">Generic CSV</option><option value="MT5">MetaTrader 5</option></select></label>
+    <label className="fileDrop"><Upload/><span><b>{file?.name ?? "Choose a CSV file"}</b><small>{source==="MT5" ? "MT5 account history · closed deals are imported · profit, swap and commission are combined" : "Required: symbol and P&amp;L · optional: direction, volume, strategy, session, notes, date"}</small></span><input type="file" accept=".csv,text/csv" onChange={e=>choose(e.target.files?.[0]??null)}/></label>
     {errors.map(e=><div className="drawerMessage" key={e}>{e}</div>)}
     {headers.length>0 && <><div className="importMeta">{headers.length} columns · previewing {rows.length} rows</div><div className="importPreview"><table><thead><tr>{headers.slice(0,7).map(h=><th key={h}>{h}</th>)}</tr></thead><tbody>{rows.slice(0,5).map((r,i)=><tr key={i}>{headers.slice(0,7).map(h=><td key={h}>{r[h]||"—"}</td>)}</tr>)}</tbody></table></div></>}
     {message && <div className="successMessage">{message}</div>}
