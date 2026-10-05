@@ -47,6 +47,7 @@ model Trade {
   accountId    String
   externalId   String?
   positionId   String?
+  contractType String?
   symbol       String
   side         TradeSide
   pnl          Decimal        @db.Decimal(18, 2)
