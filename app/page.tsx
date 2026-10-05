@@ -209,6 +209,7 @@ export default function Home() {
 }
 
 function CsvImport({accountId,onClose,onImported}:{accountId:string;onClose:()=>void;onImported:()=>Promise<void>}) {
+  const [source,setSource]=useState<"CSV"|"MT5"|"DERIV">("CSV");
   const [file,setFile]=useState<File|null>(null);
   const [rows,setRows]=useState<Record<string,string>[]>([]);
   const [headers,setHeaders]=useState<string[]>([]);
@@ -253,7 +254,7 @@ function CsvImport({accountId,onClose,onImported}:{accountId:string;onClose:()=>
   return <div className="overlay"><div className="modal importModal">
     <div className="modalHead"><div><p className="eyebrow">DATA IMPORT</p><h2>{source==="MT5" ? "Import MT5 history" : source==="DERIV" ? "Import Deriv history" : "Import CSV"}</h2></div><button className="iconBtn" onClick={onClose}><X/></button></div>
     <label>Source<select value={source} onChange={e=>{setSource(e.target.value as "CSV"|"MT5"|"DERIV");setFile(null);setRows([]);setHeaders([]);setErrors([]);setMessage("");}}><option value="CSV">Generic CSV</option><option value="MT5">MetaTrader 5</option><option value="DERIV">Deriv JSON</option></select></label>
-    <label className="fileDrop"><Upload/><span><b>{file?.name ?? "Choose a CSV file"}</b><small>{source==="MT5" ? "MT5 account history · positions are reconciled from opening and closing deals" : source==="DERIV" ? "Export the completed contracts returned by Deriv profit_table as JSON" : "Required: symbol and P&amp;L · optional: direction, volume, strategy, session, notes, date"}</small></span><input type="file" accept={source==="DERIV" ? ".json,application/json" : ".csv,text/csv"} onChange={e=>choose(e.target.files?.[0]??null)}/></label>
+    <label className="fileDrop"><Upload/><span><b>{file?.name ?? (source==="DERIV" ? "Choose a Deriv JSON file" : "Choose a CSV file")}</b><small>{source==="MT5" ? "MT5 account history · positions are reconciled from opening and closing deals" : source==="DERIV" ? "Export the completed contracts returned by Deriv profit_table as JSON" : "Required: symbol and P&amp;L · optional: direction, volume, strategy, session, notes, date"}</small></span><input type="file" accept={source==="DERIV" ? ".json,application/json" : ".csv,text/csv"} onChange={e=>choose(e.target.files?.[0]??null)}/></label>
     {errors.map(e=><div className="drawerMessage" key={e}>{e}</div>)}
     {headers.length>0 && <><div className="importMeta">{headers.length} columns · previewing {rows.length} rows</div><div className="importPreview"><table><thead><tr>{headers.slice(0,7).map(h=><th key={h}>{h}</th>)}</tr></thead><tbody>{rows.slice(0,5).map((r,i)=><tr key={i}>{headers.slice(0,7).map(h=><td key={h}>{r[h]||"—"}</td>)}</tr>)}</tbody></table></div></>}
     {message && <div className="successMessage">{message}</div>}
