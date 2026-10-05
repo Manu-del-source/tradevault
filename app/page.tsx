@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   BarChart3, BookOpen, Bot, ChevronDown, CircleDollarSign, Clock3,
   LayoutDashboard, Plus, Search, Settings, ShieldCheck, Target,
@@ -38,7 +38,6 @@ export default function Home() {
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [accountId, setAccountId] = useState("");
   const [trades, setTrades] = useState<Trade[]>([]);
-  const [query, setQuery] = useState("");
   const [modal, setModal] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -87,15 +86,6 @@ export default function Home() {
     if (!accountId) return;
     loadTrades(accountId).catch(e => setError(e instanceof Error ? e.message : "Unable to load trades"));
   }, [accountId]);
-
-  const filtered = useMemo(() => {
-    const q = query.toLowerCase();
-    return trades.filter(t =>
-      t.symbol.toLowerCase().includes(q) ||
-      (t.strategy ?? "").toLowerCase().includes(q) ||
-      (t.session ?? "").toLowerCase().includes(q)
-    );
-  }, [trades, query]);
 
   const values = trades.map(t => Number(t.pnl) || 0);
   const net = values.reduce((a, v) => a + v, 0);
