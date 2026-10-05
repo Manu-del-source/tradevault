@@ -123,11 +123,15 @@ export async function POST(request: Request) {
         symbol,
         side: directionForContract(contractType),
         pnl,
-        entryPrice: buyPrice,
-        exitPrice: exitValue,
-        volume: buyPrice,
+        entryPrice: null,
+        exitPrice: null,
+        volume: null,
         strategy: `Deriv ${contractType}`,
-        notes: text(transaction.longcode) || text(transaction.shortcode) || null,
+        notes: [
+          `Stake: ${buyPrice}`,
+          `Return: ${exitValue}`,
+          text(transaction.longcode) || text(transaction.shortcode)
+        ].filter(Boolean).join(" · ") || null,
         openedAt,
         closedAt: transactionTime,
         source: "DERIV" as const
