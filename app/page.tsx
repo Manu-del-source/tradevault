@@ -180,7 +180,7 @@ export default function Home() {
         {error && <div className="errorBar">{error}<button onClick={() => setError("")}><X size={15}/></button></div>}
         {loading ? <div className="card full loadingState">Loading account data…</div> :
           active === "Dashboard" ? <Dashboard net={net} winRate={winRate} pf={pf} wins={wins} losses={losses} trades={trades}/> :
-          active === "Journal" ? <Journal query={query} setQuery={setQuery} trades={filtered} onAdd={() => setModal(true)} onSelect={setSelectedTrade}/> :
+          active === "Journal" ? <Journal accountId={accountId} onAdd={() => setModal(true)} onSelect={setSelectedTrade}/> :
           active === "Analytics" ? <Analytics trades={trades}/> :
           <AIReview trades={trades}/>}
       </section>
@@ -319,21 +319,55 @@ function Dashboard({net,winRate,pf,wins,losses,trades}:{net:number;winRate:numbe
 
 function Session({n,v,p}:{n:string;v:string;p:string}) { return <div className="session"><div><b>{n}</b><span>{v}</span></div><small>{p}</small></div>; }
 
-function Journal({query,setQuery,trades,onAdd,onSelect}:{query:string;setQuery:(v:string)=>void;trades:Trade[];onAdd:()=>void;onSelect:(t:Trade)=>void}) {
+function Journal({accountId,onAdd,onSelect}:{accountId:string;onAdd:()=>void;onSelect:(t:Trade)=>void}) {
+  const [query,setQuery]=useState("");
   const [sideFilter,setSideFilter]=useState("ALL");
   const [resultFilter,setResultFilter]=useState("ALL");
   const [sessionFilter,setSessionFilter]=useState("ALL");
   const [page,setPage]=useState(1);
+  const [data,setData]=useState<{trades:Trade[];total:number;pages:number}>({trades:[],total:0,pages:1});
+  const [loading,setLoading]=useState(false);
+  const [error,setError]=useState("");
   const pageSize=15;
-  const strategies=[...new Set(trades.map(t=>t.strategy).filter(Boolean))] as string[];
-  const filtered=trades.filter(t=>
-    (sideFilter==="ALL" || t.side===sideFilter) &&
-    (resultFilter==="ALL" || (resultFilter==="WIN" ? Number(t.pnl)>0 : resultFilter==="LOSS" ? Number(t.pnl)<0 : Number(t.pnl)===0)) &&
-    (sessionFilter==="ALL" || t.session===sessionFilter)
-  );
-  const pages=Math.max(1,Math.ceil(filtered.length/pageSize));
-  const visible=filtered.slice((page-1)*pageSize,page*pageSize);
-  useEffect(()=>setPage(1),[query,sideFilter,resultFilter,sessionFilter]);
+
+  useEffect(() => {
+    if (!accountId) return;
+    const controller=new AbortController();
+    setLoading(true);
+    setError("");
+    const params=new URLSearchParams({
+      accountId,
+      page:String(page),
+      pageSize:String(pageSize)
+    });
+    if(query.trim()) params.set("q",query.trim());
+    if(sideFilter!=="ALL") params.set("side",sideFilter);
+    if(resultFilter!=="ALL") params.set("result",resultFilter);
+    if(sessionFilter!=="ALL") params.set("session",sessionFilter);
+
+    fetch("/api/trades?"+params.toString(),{cache:"no-store",signal:controller.signal})
+      .then(async response => {
+        const body=await response.json();
+        if(!response.ok) throw new Error(body.error ?? "Unable to load journal");
+        setData({trades:body.trades ?? [],total:body.total ?? 0,pages:Math.max(1,body.pages ?? 1)});
+      })
+      .catch(error => {
+        if(error?.name!=="AbortError") setError(error instanceof Error ? error.message : "Unable to load journal");
+      })
+      .finally(() => setLoading(false));
+
+    return () => controller.abort();
+  },[accountId,page,query,sideFilter,resultFilter,sessionFilter]);
+
+  useEffect(() => {
+    setPage(1);
+  },[accountId,query,sideFilter,resultFilter,sessionFilter]);
+
+  const visiblePage=Math.min(page,data.pages);
+  useEffect(() => {
+    if(page>data.pages) setPage(data.pages);
+  },[page,data.pages]);
+
   return <section className="card full">
     <div className="journalToolbar">
       <div className="search"><Search/><input placeholder="Search symbols or strategies..." value={query} onChange={e=>setQuery(e.target.value)}/></div>
@@ -344,60 +378,11 @@ function Journal({query,setQuery,trades,onAdd,onSelect}:{query:string;setQuery:(
         <button className="secondary" onClick={onAdd}><Plus/>Add trade</button>
       </div>
     </div>
-    {visible.length ? <TradeTable trades={visible} onSelect={onSelect}/> : <Empty title={query ? "No matching trades" : "Journal is empty"}/>}
-    {filtered.length>0 && <div className="pagination"><span>{(page-1)*pageSize+1}–{Math.min(page*pageSize,filtered.length)} of {filtered.length}</span><div><button disabled={page===1} onClick={()=>setPage(p=>Math.max(1,p-1))}>Previous</button><b>Page {page} / {pages}</b><button disabled={page===pages} onClick={()=>setPage(p=>Math.min(pages,p+1))}>Next</button></div></div>}
+    {error && <div className="drawerMessage">{error}</div>}
+    {loading ? <div className="loadingState">Loading journal…</div> :
+      data.trades.length ? <TradeTable trades={data.trades} onSelect={onSelect}/> :
+      <Empty title={query || sideFilter!=="ALL" || resultFilter!=="ALL" || sessionFilter!=="ALL" ? "No matching trades" : "Journal is empty"}/>}
+    {data.total>0 && <div className="pagination"><span>{(visiblePage-1)*pageSize+1}–{Math.min(visiblePage*pageSize,data.total)} of {data.total}</span><div><button disabled={visiblePage===1 || loading} onClick={()=>setPage(p=>Math.max(1,p-1))}>Previous</button><b>Page {visiblePage} / {data.pages}</b><button disabled={visiblePage===data.pages || loading} onClick={()=>setPage(p=>Math.min(data.pages,p+1))}>Next</button></div></div>}
   </section>;
 }
 
-function TradeTable({trades,onSelect}:{trades:Trade[];onSelect?:(t:Trade)=>void}) {
-  return <div className="tableWrap"><table><thead><tr><th>TRADE</th><th>DIRECTION</th><th>P&amp;L</th><th>STRATEGY</th><th>SESSION</th><th>SOURCE</th></tr></thead><tbody>{trades.map(t=><tr key={t.id} onClick={()=>onSelect?.(t)} className={onSelect ? "clickableRow" : ""}><td><b>{t.symbol}</b><small>{t.closedAt ? new Date(t.closedAt).toLocaleDateString() : "Open"}</small></td><td><span className={t.side === "LONG" ? "pill long" : "pill short"}>{t.side === "LONG" ? "Long" : "Short"}</span></td><td className={Number(t.pnl)>=0 ? "profit" : "loss"}>{money(Number(t.pnl))}</td><td>{t.strategy || "—"}</td><td>{t.session || "—"}</td><td>{t.source}</td></tr>)}</tbody></table></div>;
-}
-
-function TradeDrawer({trade,onClose,onSaved,onDeleted}:{trade:Trade;onClose:()=>void;onSaved:(t:Trade)=>void;onDeleted:(id:string)=>void}) {
-  const [draft,setDraft]=useState(trade);
-  const [busy,setBusy]=useState(false);
-  const [message,setMessage]=useState("");
-  async function save(){
-    setBusy(true); setMessage("");
-    const response=await fetch("/api/trades/"+trade.id,{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify(draft)});
-    const data=await response.json();
-    if(!response.ok){setMessage(data.error??"Unable to update trade");setBusy(false);return;}
-    onSaved(data); setBusy(false);
-  }
-  async function remove(){
-    if(!window.confirm("Delete this trade permanently?")) return;
-    setBusy(true);
-    const response=await fetch("/api/trades/"+trade.id,{method:"DELETE"});
-    if(!response.ok){const data=await response.json();setMessage(data.error??"Unable to delete trade");setBusy(false);return;}
-    onDeleted(trade.id);
-  }
-  return <div className="drawerOverlay"><aside className="drawer">
-    <div className="drawerHead"><div><span className="label">TRADE DETAIL</span><h2>{draft.symbol}</h2></div><button className="iconBtn" onClick={onClose}><X/></button></div>
-    <div className="drawerGrid">
-      <label>Symbol<input value={draft.symbol} onChange={e=>setDraft({...draft,symbol:e.target.value.toUpperCase()})}/></label>
-      <label>Direction<select value={draft.side} onChange={e=>setDraft({...draft,side:e.target.value as "LONG"|"SHORT"})}><option value="LONG">Long</option><option value="SHORT">Short</option></select></label>
-      <label>P&amp;L<input type="number" step="0.01" value={draft.pnl} onChange={e=>setDraft({...draft,pnl:e.target.value})}/></label>
-      <label>Volume<input type="number" step="any" value={draft.volume ?? ""} onChange={e=>setDraft({...draft,volume:e.target.value})}/></label>
-      <label>Entry<input type="number" step="any" value={draft.entryPrice ?? ""} onChange={e=>setDraft({...draft,entryPrice:e.target.value})}/></label>
-      <label>Exit<input type="number" step="any" value={draft.exitPrice ?? ""} onChange={e=>setDraft({...draft,exitPrice:e.target.value})}/></label>
-      <label>Stop loss<input type="number" step="any" value={draft.stopLoss ?? ""} onChange={e=>setDraft({...draft,stopLoss:e.target.value})}/></label>
-      <label>Take profit<input type="number" step="any" value={draft.takeProfit ?? ""} onChange={e=>setDraft({...draft,takeProfit:e.target.value})}/></label>
-      <label>Strategy<input value={draft.strategy ?? ""} onChange={e=>setDraft({...draft,strategy:e.target.value})}/></label>
-      <label>Session<select value={draft.session ?? ""} onChange={e=>setDraft({...draft,session:e.target.value})}><option value="">Not specified</option><option>Asia</option><option>London</option><option>New York</option></select></label>
-    </div>
-    <label>Notes<textarea value={draft.notes ?? ""} onChange={e=>setDraft({...draft,notes:e.target.value})}/></label>
-    {message && <div className="drawerMessage">{message}</div>}
-    <div className="drawerActions"><button className="dangerBtn" onClick={remove} disabled={busy}>Delete</button><button className="primary" onClick={save} disabled={busy}>{busy ? "Saving…" : "Save changes"}</button></div>
-  </aside></div>;
-}
-
-function Analytics({trades}:{trades:Trade[]}) {
-  const names=[...new Set(trades.map(t=>t.strategy).filter(Boolean))] as string[];
-  return <div className="analyticsGrid"><section className="card"><span className="label">BY STRATEGY</span>{names.length ? names.map(s=>{const ts=trades.filter(t=>t.strategy===s),p=ts.reduce((a,t)=>a+Number(t.pnl),0);return <div className="analyticRow" key={s}><div><b>{s}</b><small>{ts.length} trades</small></div><strong className={p>=0?"profit":"loss"}>{money(p)}</strong></div>}) : <Empty/>}</section><section className="card"><span className="label">DIRECTIONAL BIAS</span>{trades.length ? <div className="bias">{["LONG","SHORT"].map(side=>{const ts=trades.filter(t=>t.side===side),p=ts.reduce((a,t)=>a+Number(t.pnl),0),pct=Math.round(ts.length/trades.length*100);return <div key={side}>{side==="LONG"?<TrendingUp/>:<TrendingDown/>}<b>{side==="LONG"?"Long":"Short"}</b><strong className={p>=0?"profit":"loss"}>{money(p)}</strong><small>{pct}% of trades · {ts.length} {ts.length===1?"trade":"trades"}</small></div>})}</div> : <Empty/>}</section></div>;
-}
-
-function AIReview({trades}:{trades:Trade[]}) {
-  return <div className="aiPage"><section className="aiHero"><div className="aiIcon"><Bot/></div><div><span className="label">TRADEVAULT AI</span><h2>Analysis will follow the data.</h2><p>{trades.length} logged trades are available. The review engine will wait for sufficient history before making performance claims.</p></div></section><div className="insightGrid"><Insight title="Current sample" text={trades.length+" trades are available for analysis."}/><Insight title="No fabricated conclusions" text="TradeVault will not label a setup your best strategy without enough evidence."/><Insight title="Next input" text="Import more history or connect a broker data source to deepen the review."/></div></div>;
-}
-
-function Insight({title,text}:{title:string;text:string}) { return <div className="card insight"><div className="dot"/><div><b>{title}</b><p>{text}</p></div></div>; }
