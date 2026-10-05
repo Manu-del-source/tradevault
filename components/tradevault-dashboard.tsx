@@ -57,6 +57,11 @@ export default function TradeVaultDashboard() {
   const [selectedTrade, setSelectedTrade] = useState<Trade | null>(null);
   const [importOpen, setImportOpen] = useState(false);
 
+  async function logout() {
+    await fetch("/api/auth/logout", { method: "POST" });
+    window.location.href = "/";
+  }
+
   async function loadAccounts() {
     const response = await fetch("/api/accounts");
     if (!response.ok) throw new Error("Unable to load trading accounts");
@@ -158,7 +163,7 @@ export default function TradeVaultDashboard() {
         </div>
         <nav>{nav.map(n => <button key={n} className={active === n ? "navItem active" : "navItem"} onClick={() => setActive(n)}>{n === "Dashboard" ? <LayoutDashboard/> : n === "Journal" ? <BookOpen/> : n === "Analytics" ? <BarChart3/> : <Bot/>}{n}</button>)}</nav>
         <div className="sideBottom">
-          <button className="navItem"><Settings/>Settings</button>
+          <button className="navItem" onClick={logout}><Settings/>Sign out</button>
           <div className="status"><ShieldCheck/><span><b>Journal sync</b>{account?.broker ? "Connected: " + account.broker : "Local account ready"}</span></div>
         </div>
       </aside>
