@@ -14,7 +14,7 @@ export default function LandingPage() {
           <a href="#workflow">How it works</a>
           <a href="#pricing">Pricing</a>
           <Link href="/login">Log in</Link>
-          <Link href="/signup" className="primary landingCta">Start free<ArrowRight /></Link>
+          <a href="#pricing" className="primary landingCta">View pricing<ArrowRight /></a>
         </div>
       </nav>
 
@@ -28,7 +28,7 @@ export default function LandingPage() {
             how you traded it, and what keeps repeating.
           </p>
           <div className="heroActions">
-            <Link href="/signup" className="primary">Start free<ArrowRight /></Link>
+            <a href="#pricing" className="primary">View pricing<ArrowRight /></a>
             <a href="#product" className="secondary">See the journal</a>
           </div>
           <div className="heroTrust"><ShieldCheck /> Read-only integrations · No trade execution · Built around your history</div>
@@ -101,8 +101,8 @@ export default function LandingPage() {
           <p>Start with the core journal. Pro adds deeper analytics, unlimited history, and read-only broker integrations.</p>
         </div>
         <div className="pricingGrid">
-          <div className="priceBlock"><span className="priceLabel">FREE</span><strong>$0</strong><p>For getting your journal started.</p><div className="priceLine">Manual &amp; CSV history</div><div className="priceLine">Core performance review</div><Link href="/signup" className="secondary priceButton">Start free</Link></div>
-          <div className="priceBlock featuredPrice"><span className="priceLabel">PRO</span><strong>$7<span className="pricePeriod"> / month</span></strong><p>For traders who need deeper history and integrations.</p><div className="priceLine">Everything in Free</div><div className="priceLine">Unlimited trade history</div><div className="priceLine">Advanced analytics</div><div className="priceLine">Strategy &amp; session analysis</div><div className="priceLine">MT5 / Deriv integrations</div><div className="priceLine">Advanced filters</div><span className="secondary priceButton">Payments opening soon</span></div>
+          <div className="priceBlock"><span className="priceLabel">PRO</span><strong>$7<span className="pricePeriod"> / month</span></strong><p>Full TradeVault access for serious trade review.</p><div className="priceLine">Unlimited trade history</div><div className="priceLine">Advanced analytics</div><div className="priceLine">Strategy &amp; session analysis</div><div className="priceLine">MT5 / Deriv integrations</div><div className="priceLine">Advanced filters</div><span className="secondary priceButton">Payments opening soon</span></div>
+          <div className="priceBlock featuredPrice"><span className="priceLabel">COMING SOON</span><strong>$7<span className="pricePeriod"> / month</span></strong><p>For traders who need deeper history and integrations.</p><div className="priceLine">Everything in Free</div><div className="priceLine">Unlimited trade history</div><div className="priceLine">Advanced analytics</div><div className="priceLine">Strategy &amp; session analysis</div><div className="priceLine">MT5 / Deriv integrations</div><div className="priceLine">Advanced filters</div><span className="secondary priceButton">Payments opening soon</span></div>
         </div>
       </section>
 
@@ -110,12 +110,12 @@ export default function LandingPage() {
         <span className="eyebrow">YOUR NEXT REVIEW</span>
         <h2>Stop guessing what your trading is doing.</h2>
         <p>Put the history in one place and start reviewing it properly.</p>
-        <Link href="/signup" className="primary">Create your journal<ArrowRight /></Link>
+        <a href="#pricing" className="primary">View pricing<ArrowRight /></a>
       </section>
 
       <footer className="landingFooter">
         <span>TradeVault</span><span>Trading performance infrastructure</span>
-        <div><Link href="/login">Log in</Link><Link href="/signup">Create account</Link></div>
+        <div><Link href="/login">Log in</Link></div>
       </footer>
     </main>
   );
