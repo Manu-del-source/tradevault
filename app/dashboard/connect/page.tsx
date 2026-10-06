@@ -19,6 +19,7 @@ export default function DerivConnectPage() {
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
   const [mt5Name, setMt5Name] = useState("");
+  const [mt5Broker, setMt5Broker] = useState("Deriv");
   const [mt5Login, setMt5Login] = useState("");
   const [mt5Environment, setMt5Environment] = useState<"REAL" | "DEMO">("REAL");
   const [addingMt5, setAddingMt5] = useState(false);
@@ -47,7 +48,7 @@ export default function DerivConnectPage() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         name: mt5Name.trim(),
-        broker: "Deriv",
+        broker: mt5Broker.trim() || "MT5",
         platform: "MT5",
         environment: mt5Environment,
         accountId: mt5Login.trim(),
@@ -96,10 +97,10 @@ export default function DerivConnectPage() {
 
   return <main className="authPage"><div className="authPanel" style={{maxWidth: 680}}>
     <Link href="/dashboard" className="authBack"><ArrowLeft/> Back to dashboard</Link>
-    <div className="authMark">D</div>
+    <div className="authMark">T</div>
     <span className="eyebrow">BROKER CONNECTION</span>
-    <h1>Connect Deriv securely.</h1>
-    <p>TradeVault sends you to Deriv to sign in and approve access. Your Deriv password never enters TradeVault.</p>
+    <h1>Connect your trading accounts securely.</h1>
+    <p>Deriv accounts use OAuth. MT5 accounts use the read-only TradeVault Bridge EA. Your broker password never enters TradeVault.</p>
 
     <div className="card" style={{margin:"24px 0",padding:24}}>
       <label>TradeVault account<select value={accountId} onChange={e=>setAccountId(e.target.value)} style={{marginTop:8}}>{accounts.map(a=><option key={a.id} value={a.id}>
@@ -121,6 +122,7 @@ export default function DerivConnectPage() {
       <h2 style={{marginTop:6}}>Add MT5 account</h2>
       <p style={{margin:"8px 0 16px"}}>Add the MT5 login ID without sharing your MT5 password. The same bridge works with supported MT5 brokers, including Real and Demo accounts.</p>
       <div className="formGrid">
+        <label>Broker<input placeholder="Deriv" value={mt5Broker} onChange={e=>setMt5Broker(e.target.value)}/></label>
         <label>Account name<input placeholder="Deriv MT5 Real" value={mt5Name} onChange={e=>setMt5Name(e.target.value)}/></label>
         <label>MT5 login ID<input placeholder="12345678" value={mt5Login} onChange={e=>setMt5Login(e.target.value)}/></label>
         <label>Environment<select value={mt5Environment} onChange={e=>setMt5Environment(e.target.value as "REAL"|"DEMO")}><option value="REAL">Real</option><option value="DEMO">Demo</option></select></label>
