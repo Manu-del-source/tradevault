@@ -59,22 +59,29 @@ try {
     throw "No MetaTrader 5 data folder was found. Open MT5 once, then run this installer again."
   }
 
+  $editors = @(
+    (Join-Path $env:ProgramFiles 'MetaTrader 5\\metaeditor64.exe'),
+    (Join-Path $env:ProgramFiles 'MetaTrader 5\\metaeditor.exe'),
+    (Join-Path ${env:ProgramFiles(x86)} 'MetaTrader 5\\metaeditor64.exe'),
+    (Join-Path ${env:ProgramFiles(x86)} 'MetaTrader 5\\metaeditor.exe')
+  ) | Where-Object { Test-Path $_ }
+
+  if ($editors.Count -eq 0) {
+    $editors = Get-ChildItem $env:ProgramFiles -Filter metaeditor64.exe -Recurse -ErrorAction SilentlyContinue | Select-Object -ExpandProperty FullName -First 3
+  }
+  if ($editors.Count -eq 0) {
+    throw "MetaEditor was not found. Please install MT5 first, then run this setup again."
+  }
+
+  $editor = $editors | Select-Object -First 1
   $compiled = 0
   foreach ($item in $targets) {
     $source = Get-Content $item.source -Raw
     $source = $source -replace 'input string TradeVaultURL = "[^"]*";', ('input string TradeVaultURL = "' + $TradeVaultUrl + '";')
     $source = $source -replace 'input string SyncToken = "[^"]*";', ('input string SyncToken = "' + $SyncToken + '";')
     Set-Content -Path $item.source -Value $source -Encoding UTF8
-
-    $editors = @(
-      (Join-Path $item.terminal.FullName 'metaeditor64.exe'),
-      (Join-Path $item.terminal.FullName 'metaeditor.exe')
-    )
-    $editor = $editors | Where-Object { Test-Path $_ } | Select-Object -First 1
-    if ($editor) {
-      & $editor /compile:"$($item.source)" /log
-      $compiled++
-    }
+    & $editor /compile:"$($item.source)" /log
+    $compiled++
   }
 
   Write-Host ""
