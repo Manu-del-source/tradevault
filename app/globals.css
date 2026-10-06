@@ -366,3 +366,168 @@ body{background:var(--bg)}
 @media(max-width:650px){
   .landing .landingNav{background:rgba(245,247,246,.96)}
 }
+
+
+/* TradeVault application — light fintech UI */
+:root{
+  --bg:#f5f7f8;
+  --panel:#ffffff;
+  --panel2:#f8fafb;
+  --line:#e2e7eb;
+  --text:#10202d;
+  --muted:#687780;
+  --accent:#16a56b;
+  --accent2:#0d8a59;
+  --red:#dc4c57;
+}
+body{background:var(--bg);color:var(--text)}
+.shell{background:var(--bg)}
+.sidebar{
+  background:#fff;
+  border-right:1px solid var(--line);
+}
+.brandMark{background:var(--accent);color:#fff}
+.brand strong{color:var(--text)}
+.brand span{color:#829099}
+.account{
+  background:#f8fafb;
+  border-color:var(--line);
+}
+.navItem{color:#687780}
+.navItem.active,.navItem:hover{
+  background:#edf8f3;
+  color:#087b4d;
+}
+.navItem.active{color:#087b4d}
+.status{border-color:var(--line);color:var(--muted)}
+.status b{color:var(--text)}
+.status svg{color:var(--accent)}
+
+.content{background:var(--bg)}
+.topbar h1{color:var(--text)}
+.primary{
+  background:#102536;
+  border-color:#102536;
+  color:#fff;
+}
+.secondary{
+  background:#fff;
+  color:var(--text);
+  border-color:var(--line);
+}
+.metric,.card{
+  background:#fff;
+  border-color:var(--line);
+  box-shadow:0 2px 10px rgba(16,32,45,.035);
+}
+.metricTop{color:var(--muted)}
+.metricIcon{
+  background:#edf8f3;
+  color:#087b4d;
+}
+.metric strong{color:var(--text)}
+.metric small,.muted{color:var(--muted)}
+.cardHead h2{color:var(--text)}
+.cardHead h2 small{color:#0d8a59}
+.cardHead select,
+input,select{
+  background:#fff;
+  color:var(--text);
+  border-color:var(--line);
+}
+input:focus,textarea:focus{border-color:#7ac9a9}
+.search{
+  background:#fff;
+  border-color:var(--line);
+}
+.search input{background:transparent}
+.chart{
+  border-color:var(--line);
+}
+.chartEmpty{color:var(--muted)}
+.equityChart{
+  border-color:var(--line);
+  background:#fff;
+}
+.equityPath{stroke:#16a56b}
+.equityZero{stroke:#e2e7eb}
+.equityLabels,.chartAxis{color:#849199}
+.session,.analyticRow,.pagination{border-color:var(--line)}
+table th{color:#7d8990;border-color:var(--line)}
+table td{border-color:#edf0f2;color:#30424d}
+table td small{color:var(--muted)}
+.profit{color:#0d9660}
+.loss{color:var(--red)}
+.long{background:#e9f8f0;color:#087b4d}
+.short{background:#fdecee;color:#b63e48}
+.clickableRow:hover{background:#f5faf7}
+.pagination button{
+  background:#fff;
+  color:var(--text);
+  border-color:var(--line);
+}
+textarea{
+  background:#fff;
+  color:var(--text);
+  border-color:var(--line);
+}
+.fileDrop{
+  background:#fff;
+  border-color:#cbd6dc;
+}
+.fileDrop svg{color:#0d9660}
+.successMessage{
+  background:#edf9f3;
+  border-color:#bfe7d3;
+  color:#087b4d;
+}
+.drawerOverlay,.overlay{background:rgba(10,24,34,.38)}
+.drawer,.modal,.authPanel{
+  background:#fff;
+  border-color:var(--line);
+  box-shadow:0 25px 80px rgba(16,32,45,.16);
+}
+.drawer h2,.modal h2,.authPanel h1{color:var(--text)}
+.drawer label,.modal label{color:var(--muted)}
+.drawer input,.drawer select,.modal input{background:#fff}
+.drawerMessage,.authError{
+  background:#fff1f2;
+  border-color:#f2c5c9;
+  color:#b63e48;
+}
+.dangerBtn{
+  background:#fff1f2;
+  border-color:#efc4c8;
+  color:#b63e48;
+}
+.aiHero{
+  background:linear-gradient(120deg,#eefaf5,#f8fbfa);
+  border-color:#cfe9dc;
+}
+.aiIcon{background:var(--accent);color:#fff}
+.aiHero h2{color:var(--text)}
+.aiHero p,.insight p{color:var(--muted)}
+.dot{background:var(--accent)}
+.bias div{background:#f8fafb}
+.bias svg{color:#0d9660}
+.adminPage{background:var(--bg)}
+.adminHeader h1{color:var(--text)}
+.mobileHeader{
+  background:rgba(255,255,255,.94);
+  border-color:var(--line);
+}
+.mobileAdmin{
+  background:#edf8f3;
+  border-color:#cfe9dc;
+  color:#087b4d;
+}
+
+/* Keep authentication screens aligned with the product */
+.authPage{background:var(--bg)}
+.authBack{color:var(--muted)}
+.authMark{background:var(--accent);color:#fff}
+.authPanel>p{color:var(--muted)}
+.authNote{color:var(--muted)}
+.authNote svg{color:var(--accent)}
+.authSwitch{border-color:var(--line);color:var(--muted)}
+.authSwitch a{color:#087b4d}
