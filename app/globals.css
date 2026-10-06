@@ -41,3 +41,6 @@ body{background:var(--bg)}
 .featureIcon,.securityIcon{background:#121d23;border-color:#29413f}
 .chartLine{background:linear-gradient(153deg,transparent 0 11%,#59d6c2 12%,transparent 13% 25%,#59d6c2 26%,transparent 27% 41%,#59d6c2 42%,transparent 43% 55%,#59d6c2 56%,transparent 57% 72%,#59d6c2 73%,transparent 74%)}
 .priceBlock,.featuredPrice{background:#0e141b}
+
+/* Admin */
+.adminPage{min-height:100vh;max-width:1400px;margin:0 auto;padding:34px 40px;background:var(--bg)}.adminHeader{display:flex;justify-content:space-between;align-items:flex-start;gap:20px;margin-bottom:30px}.adminHeader h1{font-size:30px;margin:5px 0}.adminHeader p{color:var(--muted);font-size:11px;margin:0}.adminActions{display:flex;gap:8px}.adminActions a{text-decoration:none}.adminGrid{display:grid;grid-template-columns:repeat(4,1fr);gap:13px;margin-bottom:16px}.adminLoading{min-height:300px;display:grid;place-items:center;color:var(--muted)}@media(max-width:900px){.adminGrid{grid-template-columns:1fr 1fr}.adminPage{padding:25px 20px}}@media(max-width:600px){.adminHeader{flex-direction:column}.adminGrid{grid-template-columns:1fr 1fr}.adminPage{padding:20px 14px}.adminActions{width:100%}.adminActions>*{flex:1;justify-content:center}}
