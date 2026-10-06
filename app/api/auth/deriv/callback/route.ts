@@ -52,47 +52,107 @@ export async function GET(request: Request) {
     const accounts = await getDerivAccounts(String(token.access_token));
     if (!accounts.length) throw new Error("No Deriv trading account was returned");
 
-    const deriv = accounts.find(a => a.account_id || a.id || a.loginid) ?? accounts[0];
-    const derivAccountId = String(deriv.account_id ?? deriv.id ?? deriv.loginid);
-    if (!derivAccountId) throw new Error("Deriv account ID was not returned");
+    const normalized = accounts
+      .map((a) => ({
+        id: String(a.account_id ?? a.id ?? a.loginid ?? ""),
+        currency: a.currency ? String(a.currency).toUpperCase() : "USD",
+        environment:
+          a.is_virtual === true || String(a.account_type ?? "").toLowerCase() === "demo"
+            ? "DEMO"
+            : "REAL"
+      }))
+      .filter((a) => a.id);
 
-    await prisma.derivOAuthCredential.upsert({
-      where: { accountId: pending.accountId },
-      create: {
-        accountId: pending.accountId,
-        derivAccountId,
-        accessToken: encryptSecret(String(token.access_token)),
-        refreshToken: token.refresh_token ? encryptSecret(String(token.refresh_token)) : null,
-        expiresAt: token.expires_in ? new Date(Date.now() + Number(token.expires_in) * 1000) : null
-      },
-      update: {
-        derivAccountId,
-        accessToken: encryptSecret(String(token.access_token)),
-        refreshToken: token.refresh_token ? encryptSecret(String(token.refresh_token)) : null,
-        expiresAt: token.expires_in ? new Date(Date.now() + Number(token.expires_in) * 1000) : null
-      }
+    if (!normalized.length) throw new Error("Deriv account IDs were not returned");
+
+    const pendingAccount = await prisma.tradingAccount.findFirst({
+      where: { id: pending.accountId, userId: user.id }
     });
+    if (!pendingAccount) throw new Error("TradeVault account was not found");
 
-    await prisma.tradingAccount.update({
-      where: { id: pending.accountId },
-      data: {
+    const linkedAccounts = [];
+    for (let index = 0; index < normalized.length; index++) {
+      const item = normalized[index];
+      const existing = await prisma.tradingAccount.findFirst({
+        where: {
+          userId: user.id,
+          broker: "Deriv",
+          platform: "DERIV",
+          accountId: item.id
+        }
+      });
+
+      const target = existing ?? (index === 0
+        ? pendingAccount
+        : await prisma.tradingAccount.create({
+            data: {
+              userId: user.id,
+              name: "Deriv " + item.environment + " account",
+              broker: "Deriv",
+              platform: "DERIV",
+              environment: item.environment,
+              accountId: item.id,
+              currency: item.currency
+            }
+          }));
+
+      await prisma.tradingAccount.update({
+        where: { id: target.id },
+        data: {
+          broker: "Deriv",
+          platform: "DERIV",
+          environment: item.environment,
+          accountId: item.id,
+          currency: item.currency
+        }
+      });
+
+      await prisma.derivOAuthCredential.upsert({
+        where: { accountId: target.id },
+        create: {
+          accountId: target.id,
+          derivAccountId: item.id,
+          accessToken: encryptSecret(String(token.access_token)),
+          refreshToken: token.refresh_token ? encryptSecret(String(token.refresh_token)) : null,
+          expiresAt: token.expires_in ? new Date(Date.now() + Number(token.expires_in) * 1000) : null
+        },
+        update: {
+          derivAccountId: item.id,
+          accessToken: encryptSecret(String(token.access_token)),
+          refreshToken: token.refresh_token ? encryptSecret(String(token.refresh_token)) : null,
+          expiresAt: token.expires_in ? new Date(Date.now() + Number(token.expires_in) * 1000) : null
+        }
+      });
+
+      linkedAccounts.push(target.id);
+    }
+
+    const syncTarget = normalized[0];
+    const syncAccount = await prisma.tradingAccount.findFirst({
+      where: {
+        userId: user.id,
         broker: "Deriv",
-        accountId: derivAccountId,
-        currency: deriv.currency ? String(deriv.currency).toUpperCase() : undefined
+        platform: "DERIV",
+        accountId: syncTarget.id
       }
     });
+    if (!syncAccount) throw new Error("Linked Deriv account could not be located");
 
     await prisma.derivOAuthState.delete({ where: { id: pending.id } });
 
     let syncStatus = "connected";
     try {
-      await syncDerivAccount(pending.accountId, user.id);
+      await syncDerivAccount(syncAccount.id, user.id);
       syncStatus = "synced";
     } catch {
       syncStatus = "connected";
     }
 
-    return redirect(syncStatus, "&accountId=" + encodeURIComponent(pending.accountId));
+    return redirect(
+      syncStatus,
+      "&accountId=" + encodeURIComponent(syncAccount.id) +
+      "&linked=" + encodeURIComponent(String(linkedAccounts.length))
+    );
   } catch {
     await prisma.derivOAuthState.delete({ where: { id: pending.id } }).catch(() => undefined);
     return redirect("error");
