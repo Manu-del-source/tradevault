@@ -55,7 +55,7 @@ export default function TradeVaultDashboard() {
   const [takeProfit, setTakeProfit] = useState("");
   const [notes, setNotes] = useState("");
   const [selectedTrade, setSelectedTrade] = useState<Trade | null>(null);
-  const [importOpen, setImportOpen] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);\n  const [connectionNotice, setConnectionNotice] = useState<{type:"success"|"error";text:string} | null>(null);
 
   async function logout() {
     await fetch("/api/auth/logout", { method: "POST" });
@@ -173,7 +173,7 @@ export default function TradeVaultDashboard() {
           <div><p className="eyebrow">TRADING PERFORMANCE</p><h1>{active}</h1></div>
           <div className="topActions"><a className="secondary" href="/dashboard/connect" style={{display:"inline-flex",alignItems:"center",textDecoration:"none"}}>Connect Deriv</a><button className="secondary" onClick={() => setImportOpen(true)} disabled={!accountId}><Upload/>Import CSV</button><button className="primary" onClick={() => setModal(true)} disabled={!accountId}><Plus/>Log trade</button></div>
         </header>
-        {error && <div className="errorBar">{error}<button onClick={() => setError("")}><X size={15}/></button></div>}
+        {connectionNotice && <div className={connectionNotice.type === "success" ? "successMessage" : "errorBar"} style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:12,marginBottom:16}}><span>{connectionNotice.text}</span><button onClick={() => setConnectionNotice(null)}><X size={15}/></button></div>}\n        {account?.broker === "Deriv" && <div className="successMessage" style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:12,marginBottom:16}}><span>✓ <b>Deriv connected</b> — TradeVault is linked to your Deriv account.</span><a href="/dashboard/connect" style={{textDecoration:"none"}}>Manage connection</a></div>}\n        {error && <div className="errorBar">{error}<button onClick={() => setError("")}><X size={15}/></button></div>}
         {loading ? <div className="card full loadingState">Loading account data…</div> :
           active === "Dashboard" ? <Dashboard net={net} winRate={winRate} pf={pf} wins={wins} losses={losses} trades={trades}/> :
           active === "Journal" ? <Journal accountId={accountId} onAdd={() => setModal(true)} onSelect={setSelectedTrade}/> :
