@@ -22,6 +22,8 @@ export default function DerivConnectPage() {
   const [mt5Login, setMt5Login] = useState("");
   const [mt5Environment, setMt5Environment] = useState<"REAL" | "DEMO">("REAL");
   const [addingMt5, setAddingMt5] = useState(false);
+  const [bridgeBusy, setBridgeBusy] = useState(false);
+  const [bridgeToken, setBridgeToken] = useState("");
 
   async function load() {
     const r = await fetch("/api/accounts", { cache: "no-store" });
@@ -66,6 +68,19 @@ export default function DerivConnectPage() {
     setAddingMt5(false);
   }
 
+  async function createBridgeToken() {
+    if (!accountId) return;
+    setBridgeBusy(true); setMessage(""); setBridgeToken("");
+    const r = await fetch("/api/mt5/credentials", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ accountId })
+    });
+    const data = await r.json();
+    if (!r.ok) setMessage(data.error ?? "Unable to create MT5 bridge token.");
+    else setBridgeToken(data.token ?? "");
+    setBridgeBusy(false);
+  }
+
   async function sync() {
     if (!accountId) return;
     setBusy(true); setMessage("");
@@ -103,8 +118,8 @@ export default function DerivConnectPage() {
 
     <div className="card" style={{margin:"16px 0 0",padding:24}}>
       <span className="eyebrow">MT5 ACCOUNT</span>
-      <h2 style={{marginTop:6}}>Add Deriv MT5</h2>
-      <p style={{margin:"8px 0 16px"}}>Add the MT5 login ID without sharing your MT5 password. Closed MT5 history can then be imported into this account.</p>
+      <h2 style={{marginTop:6}}>Add MT5 account</h2>
+      <p style={{margin:"8px 0 16px"}}>Add the MT5 login ID without sharing your MT5 password. The same bridge works with supported MT5 brokers, including Real and Demo accounts.</p>
       <div className="formGrid">
         <label>Account name<input placeholder="Deriv MT5 Real" value={mt5Name} onChange={e=>setMt5Name(e.target.value)}/></label>
         <label>MT5 login ID<input placeholder="12345678" value={mt5Login} onChange={e=>setMt5Login(e.target.value)}/></label>
@@ -112,5 +127,27 @@ export default function DerivConnectPage() {
       </div>
       <button className="secondary wide" onClick={addMt5} disabled={addingMt5} style={{marginTop:16}}><Plus/> {addingMt5 ? "Adding…" : "Add MT5 account"}</button>
     </div>
+
+    {accounts.find(a=>a.id===accountId)?.platform === "MT5" && <div className="card" style={{margin:"16px 0 0",padding:24}}>
+      <span className="eyebrow">MT5 BRIDGE</span>
+      <h2 style={{marginTop:6}}>Enable automatic synchronization</h2>
+      <p style={{margin:"8px 0 16px"}}>Install the TradeVault Bridge EA in the customer’s MT5 terminal. It reads closed deals and sends them to TradeVault over HTTPS. It cannot place trades.</p>
+      <button className="primary wide" onClick={createBridgeToken} disabled={bridgeBusy}>{bridgeBusy ? "Generating…" : "Generate bridge token"}</button>
+      {bridgeToken && <div style={{marginTop:16}}>
+        <label>Copy this token now<input readOnly value={bridgeToken} onFocus={e=>e.currentTarget.select()} /></label>
+        <div className="authNote" style={{marginTop:12}}><ShieldCheck/> This plaintext token is shown once. Store it securely and paste it into the EA’s SyncToken input.</div>
+      </div>}
+      <div style={{marginTop:16,fontSize:14,lineHeight:1.6}}>
+        <strong>MT5 setup</strong>
+        <ol style={{paddingLeft:20,margin:"8px 0 0"}}>
+          <li>Open MT5 and log into this exact account.</li>
+          <li>Copy <code>mt5/TradeVaultBridge.mq5</code> into MetaEditor and compile it.</li>
+          <li>Attach TradeVaultBridge to any chart.</li>
+          <li>Set <code>TradeVaultURL</code> to <code>https://vault.smartbiz365.site/api/mt5/ingest</code>.</li>
+          <li>Paste the generated token into <code>SyncToken</code>.</li>
+          <li>In MT5, allow WebRequest for <code>https://vault.smartbiz365.site</code>.</li>
+        </ol>
+      </div>
+    </div> }
   </div></main>;
 }
