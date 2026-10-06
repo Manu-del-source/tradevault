@@ -158,3 +158,211 @@ body{background:var(--bg)}
 .showcaseCopy h2,.analyticsCopy h2{font-size:38px;line-height:1.08;letter-spacing:-1.5px;margin:10px 0 14px}.showcaseCopy>p,.analyticsCopy>p{color:var(--muted);font-size:12px;line-height:1.8;max-width:500px}.checkList{margin:25px 0;display:grid;gap:11px}.checkList div{font-size:10px;color:#b5c2bd}.checkList span{color:var(--accent);margin-right:7px}.textLink{display:inline-flex;align-items:center;gap:7px;color:var(--accent);font-size:10px;text-decoration:none;font-weight:700}.textLink svg{width:14px}.dashboardMock{border:1px solid #29343f;background:#0e141b;border-radius:12px;padding:18px;box-shadow:0 25px 70px #0007}.mockHeader,.analyticsCardTop{display:flex;justify-content:space-between;color:#71817c;font-size:8px;letter-spacing:1.3px;padding-bottom:12px;border-bottom:1px solid var(--line)}.mockStats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:14px 0}.mockStats span{background:#121b24;border:1px solid var(--line);padding:12px;border-radius:6px}.mockStats small{display:block;color:#6f7f8a;font-size:7px}.mockStats b{display:block;font-size:12px;margin-top:7px}.mockTable{border:1px solid var(--line);border-radius:6px;overflow:hidden}.mockTable>div{display:grid;grid-template-columns:.8fr 1.5fr .8fr;gap:10px;padding:11px;border-bottom:1px solid var(--line);font-size:9px;color:#a3b0ad}.mockTable>div:last-child{border-bottom:0}.mockTableHead{color:#687780!important;font-size:7px!important;letter-spacing:1px}.mockTable b{color:var(--accent);font-weight:600}.analyticsSection{max-width:1240px;margin:0 auto;padding:100px 32px;display:grid;grid-template-columns:1.1fr .9fr;gap:90px;align-items:center;border-bottom:1px solid var(--line)}.analyticsCard{border:1px solid #29343f;background:#0e141b;border-radius:12px;padding:20px}.analyticsBars{height:250px;display:grid;grid-template-columns:repeat(4,1fr);gap:18px;align-items:end;padding-top:35px}.analyticsBars>div{height:100%;display:flex;flex-direction:column;justify-content:end;align-items:center;gap:8px}.analyticsBars i{display:block;width:42px;max-width:70%;background:linear-gradient(to top,#2f9f8f,#59d6c2);border-radius:4px 4px 0 0;min-height:30px}.analyticsBars span,.analyticsBars b{font-size:7px;color:#71817c}.analyticsBars b{color:#b7c5c0}.miniInsight{display:flex;gap:12px;padding:15px 0;border-top:1px solid var(--line);margin-top:10px}.miniInsight svg{width:18px;color:var(--accent);flex:none}.miniInsight b,.miniInsight span{display:block}.miniInsight b{font-size:10px}.miniInsight span{font-size:9px;color:var(--muted);margin-top:4px;line-height:1.5}.comingPill{border:1px solid #34534b;color:var(--accent);padding:4px 7px;border-radius:20px;font-size:7px;letter-spacing:1px}.priceFeatures{display:grid;gap:8px;margin-top:17px}.priceFeatures div{font-size:9px;color:#aab8b2}.priceFeatures span{color:var(--accent);margin-right:6px}.priceButton{text-decoration:none;margin-top:20px}.finalCta small{display:block;color:#566860;font-size:8px;margin-top:12px}
 @media(max-width:900px){.showcaseSection,.analyticsSection{grid-template-columns:1fr;gap:45px}.analyticsSection{padding-top:75px}.showcaseSection{padding-top:75px}}
 @media(max-width:650px){.showcaseSection,.analyticsSection{padding-left:18px;padding-right:18px}.showcaseCopy h2,.analyticsCopy h2{font-size:30px}.mockStats{grid-template-columns:1fr}.mockTable{overflow:auto}.mockTable>div{min-width:430px}.analyticsBars{gap:8px}.analyticsBars i{width:28px}}
+
+
+/* TradeVault landing — premium light fintech direction */
+.landing{
+  --landing-bg:#f5f7f6;
+  --landing-surface:#ffffff;
+  --landing-surface-soft:#f8faf9;
+  --landing-border:#e4e9e6;
+  --landing-text:#0c1b2a;
+  --landing-muted:#64727c;
+  --landing-accent:#16a56b;
+  --landing-accent-dark:#087b4d;
+  --landing-navy:#0b1d2b;
+  background:var(--landing-bg);
+  color:var(--landing-text);
+}
+.landing .landingNav{
+  background:rgba(245,247,246,.92);
+  border-bottom:1px solid var(--landing-border);
+  color:var(--landing-text);
+}
+.landing .landingBrand{color:var(--landing-text)}
+.landing .landingBrand b{color:var(--landing-text)}
+.landing .landingBrand small{color:#77858d}
+.landing .landingBrand .brandMark{
+  background:var(--landing-accent);
+  color:#fff;
+  box-shadow:0 7px 18px rgba(22,165,107,.18);
+}
+.landing .landingLinks a{color:#63717a}
+.landing .landingLinks a:hover{color:var(--landing-text)}
+.landing .landingLinks .landingCta{
+  background:var(--landing-navy);
+  border-color:var(--landing-navy);
+  color:#fff;
+}
+.landing .eyebrow{color:#718089}
+.landing .heroCopy h1{color:var(--landing-text)}
+.landing .heroCopy h1 em{color:var(--landing-accent-dark)}
+.landing .heroCopy>p{color:var(--landing-muted)}
+.landing .heroActions .primary{
+  background:var(--landing-navy);
+  border-color:var(--landing-navy);
+  color:#fff;
+  box-shadow:0 10px 24px rgba(11,29,43,.12);
+}
+.landing .heroActions .secondary{
+  background:#fff;
+  color:var(--landing-text);
+  border-color:var(--landing-border);
+}
+.landing .heroTrust{color:#77858d}
+.landing .heroTrust svg{color:var(--landing-accent-dark)}
+
+.landing .terminalPreview{
+  background:var(--landing-navy);
+  border:1px solid #203647;
+  box-shadow:0 28px 70px rgba(18,35,47,.18);
+}
+.landing .previewTop{border-color:#294253;color:#a9b8c1}
+.landing .previewTop span{color:#d7e0e5}
+.landing .previewTop i{background:#4ade91}
+.landing .previewToolbar span{
+  background:#142b3b;
+  border-color:#294253;
+  color:#a9b8c1;
+}
+.landing .previewMetrics div{
+  background:#102738;
+  border-color:#294253;
+}
+.landing .previewMetrics small{color:#91a4ae}
+.landing .previewMetrics b{color:#fff}
+.landing .previewMetrics span{color:#80949f}
+.landing .previewChart{background:#0d2231;border-color:#294253}
+.landing .chartGridLines{
+  background:repeating-linear-gradient(to bottom,transparent 0,transparent 45px,#173446 46px);
+}
+.landing .chartLine{
+  background:linear-gradient(153deg,transparent 0 11%,#55d99a 12%,transparent 13% 25%,#55d99a 26%,transparent 27% 41%,#55d99a 42%,transparent 43% 55%,#55d99a 56%,transparent 57% 72%,#55d99a 73%,transparent 74%);
+}
+.landing .chartAxisLabels{color:#6f8794}
+.landing .previewRows div{border-color:#294253;color:#9aadb7}
+.landing .previewRows b{color:#55d99a}
+
+.landing .proofStrip{
+  background:#fff;
+  border-color:var(--landing-border);
+  color:#7b878e;
+}
+.landing .proofStrip b{color:var(--landing-navy)}
+.landing .proofStrip p{color:#7b878e}
+
+.landing .landingSection,
+.landing .workflowSection,
+.landing .showcaseSection,
+.landing .analyticsSection,
+.landing .securitySection,
+.landing .pricingSection,
+.landing .finalCta{
+  border-color:var(--landing-border);
+}
+.landing .sectionIntro h2,
+.landing .workflowSection h2,
+.landing .showcaseCopy h2,
+.landing .analyticsCopy h2,
+.landing .securitySection h2,
+.landing .finalCta h2{
+  color:var(--landing-text);
+}
+.landing .sectionIntro p,
+.landing .workflowLead,
+.landing .showcaseCopy>p,
+.landing .analyticsCopy>p,
+.landing .securitySection p{
+  color:var(--landing-muted);
+}
+
+.landing .featureGrid{border-color:var(--landing-border)}
+.landing .feature{
+  background:#fff;
+  border-color:var(--landing-border);
+}
+.landing .featureIcon,
+.landing .securityIcon{
+  background:#edf8f3;
+  border-color:#d4eee2;
+  color:var(--landing-accent-dark);
+}
+.landing .feature h3{color:var(--landing-text)}
+.landing .feature p{color:var(--landing-muted)}
+
+.landing .workflowSteps{border-color:var(--landing-border)}
+.landing .step{border-color:var(--landing-border)}
+.landing .step>span{color:var(--landing-accent-dark)}
+.landing .step b{color:var(--landing-text)}
+.landing .step p{color:var(--landing-muted)}
+
+.landing .dashboardMock,
+.landing .analyticsCard{
+  background:#fff;
+  border-color:var(--landing-border);
+  box-shadow:0 22px 60px rgba(21,39,49,.08);
+}
+.landing .mockHeader,
+.landing .analyticsCardTop{
+  color:#7c898f;
+  border-color:var(--landing-border);
+}
+.landing .mockStats span{
+  background:#f7faf8;
+  border-color:var(--landing-border);
+}
+.landing .mockStats small{color:#7a878d}
+.landing .mockStats b{color:var(--landing-text)}
+.landing .mockTable{border-color:var(--landing-border)}
+.landing .mockTable>div{border-color:var(--landing-border);color:#5f7079}
+.landing .mockTableHead{color:#89959b!important}
+.landing .mockTable b{color:var(--landing-accent-dark)}
+
+.landing .analyticsBars i{
+  background:linear-gradient(to top,#15915f,#4ccf91);
+}
+.landing .analyticsBars span{color:#7b898f}
+.landing .analyticsBars b{color:var(--landing-text)}
+.landing .miniInsight{border-color:var(--landing-border)}
+.landing .miniInsight svg{color:var(--landing-accent-dark)}
+.landing .miniInsight b{color:var(--landing-text)}
+.landing .miniInsight span{color:var(--landing-muted)}
+
+.landing .securityIcon{color:var(--landing-accent-dark)}
+.landing .securitySection{background:transparent}
+
+.landing .pricingCard{
+  background:#fff;
+  border-color:var(--landing-border);
+}
+.landing .priceLabel{color:#6f7e85}
+.landing .comingPill{
+  border-color:#bfe7d3;
+  color:var(--landing-accent-dark);
+  background:#effaf4;
+}
+.landing .price{color:var(--landing-text)}
+.landing .priceFeatures div{color:#5f7079}
+.landing .priceFeatures span{color:var(--landing-accent-dark)}
+.landing .priceButton{
+  background:var(--landing-navy);
+  border-color:var(--landing-navy);
+  color:#fff;
+}
+.landing .finalCta .primary{
+  background:var(--landing-navy);
+  border-color:var(--landing-navy);
+  color:#fff;
+}
+.landing .finalCta small{color:#829097}
+
+.landing .landingFooter{
+  background:#fff;
+  color:#75828a;
+}
+.landing .landingFooter>span:first-child{color:var(--landing-text)}
+.landing .landingFooter a{color:#75828a}
+
+@media(max-width:650px){
+  .landing .landingNav{background:rgba(245,247,246,.96)}
+}
