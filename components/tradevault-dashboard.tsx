@@ -217,8 +217,7 @@ function CsvImport({accountId,onClose,onImported}:{accountId:string;onClose:()=>
   const [message,setMessage]=useState("");
 
   function parse(text:string) {
-    const lines=text.split(/\r?
-/).filter(Boolean);
+    const lines=text.split(/\r?\n/).filter(Boolean);
     if(lines.length<2) return {headers:[],rows:[]};
     const hs=lines[0].split(",").map(h=>h.trim());
     return {headers:hs,rows:lines.slice(1,101).map(line=>{const cells=line.split(",");return Object.fromEntries(hs.map((h,i)=>[h,cells[i]?.trim()??""]));})};
