@@ -34,7 +34,7 @@ function money(value: number) {
   return (value >= 0 ? "+" : "-") + "$" + Math.abs(value).toLocaleString(undefined, { maximumFractionDigits: 2 });
 }
 
-export default function TradeVaultDashboard() {
+export default function TradeVaultDashboard({ isAdmin = false }: { isAdmin?: boolean }) {
   const [active, setActive] = useState("Dashboard");
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [accountId, setAccountId] = useState("");
@@ -162,14 +162,14 @@ export default function TradeVaultDashboard() {
           <ChevronDown size={16}/>
           {accounts.length > 1 && <select aria-label="Select account" value={accountId} onChange={e => setAccountId(e.target.value)}>{accounts.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}</select>}
         </div>
-        <nav>{nav.map(n => <button key={n} className={active === n ? "navItem active" : "navItem"} onClick={() => setActive(n)}>{n === "Dashboard" ? <LayoutDashboard/> : n === "Journal" ? <BookOpen/> : n === "Analytics" ? <BarChart3/> : <Bot/>}{n}</button>)}</nav>
+        <nav>{nav.map(n => <button key={n} className={active === n ? "navItem active" : "navItem"} onClick={() => setActive(n)}>{n === "Dashboard" ? <LayoutDashboard/> : n === "Journal" ? <BookOpen/> : n === "Analytics" ? <BarChart3/> : <Bot/>}{n}</button>)}</nav>\n        {isAdmin && <a className="navItem adminLink" href="/admin"><ShieldCheck/>Admin Dashboard</a>}
         <div className="sideBottom">
           <button className="navItem" onClick={logout}><Settings/>Sign out</button>
           <div className="status"><ShieldCheck/><span><b>Journal sync</b>{account?.broker ? "Connected: " + account.broker : "Local account ready"}</span></div>
         </div>
       </aside>
 
-      <section className="content">
+      <div className="mobileHeader"><div className="brand"><div className="brandMark">T</div><div><strong>TradeVault</strong><span>TRADING JOURNAL</span></div></div>{isAdmin && <a className="mobileAdmin" href="/admin"><ShieldCheck size={16}/> Admin</a>}</div>\n\n      <section className="content">
         <header className="topbar">
           <div><p className="eyebrow">TRADING PERFORMANCE</p><h1>{active}</h1></div>
           <div className="topActions"><a className="secondary" href="/dashboard/connect" style={{display:"inline-flex",alignItems:"center",textDecoration:"none"}}>Connect Deriv</a><button className="secondary" onClick={() => setImportOpen(true)} disabled={!accountId}><Upload/>Import CSV</button><button className="primary" onClick={() => setModal(true)} disabled={!accountId}><Plus/>Log trade</button></div>
