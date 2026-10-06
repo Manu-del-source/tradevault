@@ -25,6 +25,8 @@ export async function POST(request: Request) {
         userId: user.id,
         name,
         broker: body.broker ? String(body.broker).trim() : null,
+        platform: body.platform ? String(body.platform).trim().toUpperCase() : null,
+        environment: body.environment ? String(body.environment).trim().toUpperCase() : null,
         accountId: body.accountId ? String(body.accountId).trim() : null,
         currency: body.currency ? String(body.currency).trim().toUpperCase() : "USD"
       }
