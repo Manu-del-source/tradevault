@@ -62,8 +62,8 @@ try {
   $editors = @(
     (Join-Path $env:ProgramFiles 'MetaTrader 5\\metaeditor64.exe'),
     (Join-Path $env:ProgramFiles 'MetaTrader 5\\metaeditor.exe'),
-    (Join-Path ${env:ProgramFiles(x86)} 'MetaTrader 5\\metaeditor64.exe'),
-    (Join-Path ${env:ProgramFiles(x86)} 'MetaTrader 5\\metaeditor.exe')
+    (Join-Path \${env:ProgramFiles(x86)} 'MetaTrader 5\\metaeditor64.exe'),
+    (Join-Path \${env:ProgramFiles(x86)} 'MetaTrader 5\\metaeditor.exe')
   ) | Where-Object { Test-Path $_ }
 
   if ($editors.Count -eq 0) {
