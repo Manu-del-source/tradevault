@@ -1,129 +1,30 @@
 import Link from "next/link";
-import { ArrowRight, BarChart3, Database, FileSpreadsheet, ShieldCheck, SlidersHorizontal, TrendingUp, WalletCards } from "lucide-react";
+import { ArrowRight, BarChart3, Database, FileSpreadsheet, ShieldCheck, SlidersHorizontal, TrendingUp } from "lucide-react";
+
+const features = [
+  [Database, "One trading history", "Bring MT5, Deriv, CSV, and manual trades into one account-aware journal."],
+  [BarChart3, "Performance analytics", "Understand P&L, win rate, profit factor, equity progression, symbols, sessions, and strategies."],
+  [SlidersHorizontal, "Strategy & session filters", "Slice your history by symbol, direction, strategy, session, and date."],
+  [ShieldCheck, "Read-only integrations", "Broker connectors are designed to record history, not place or modify trades."],
+  [FileSpreadsheet, "CSV import", "Bring existing history into TradeVault without rebuilding your journal from scratch."],
+  [TrendingUp, "Evidence-first review", "Use patterns supported by your own history instead of generic trading advice."],
+] as const;
 
 export default function LandingPage() {
-  return (
-    <main className="landing">
-      <nav className="landingNav">
-        <Link href="/" className="landingBrand">
-          <span className="brandMark">T</span>
-          <span><b>TradeVault</b><small>TRADING JOURNAL</small></span>
-        </Link>
-        <div className="landingLinks">
-          <a href="#features">Features</a>
-          <a href="#workflow">How it works</a>
-          <a href="#pricing">Pricing</a>
-          <Link href="/login">Log in</Link>
-          <a href="#pricing" className="primary landingCta">View pricing<ArrowRight /></a>
-        </div>
-      </nav>
-
-      <section className="landingHero">
-        <div className="heroCopy">
-          <span className="eyebrow">TRADING PERFORMANCE SYSTEM</span>
-          <h1>Your trading history.<br /><em>Without the guesswork.</em></h1>
-          <p>
-            TradeVault brings MT5, Deriv, CSV, and manual trade history into one
-            structured journal so you can review what you actually traded,
-            how you traded it, and what keeps repeating.
-          </p>
-          <div className="heroActions">
-            <a href="#pricing" className="primary">View pricing<ArrowRight /></a>
-            <a href="#product" className="secondary">See the journal</a>
-          </div>
-          <div className="heroTrust"><ShieldCheck /> Read-only integrations · No trade execution · Built around your history</div>
-        </div>
-
-        <div id="product" className="terminalPreview">
-          <div className="previewTop"><span><i /> TRADEVAULT / OVERVIEW</span><small>ACCOUNT: PRIMARY</small></div>
-          <div className="previewToolbar"><span>Performance</span><span>All history</span><span>USD</span></div>
-          <div className="previewMetrics">
-            <div><small>NET P&amp;L</small><b>Calculated</b><span>From closed trades</span></div>
-            <div><small>WIN RATE</small><b>Calculated</b><span>From trade history</span></div>
-            <div><small>PROFIT FACTOR</small><b>Calculated</b><span>From trade history</span></div>
-          </div>
-          <div className="previewChart">
-            <div className="chartGridLines" />
-            <div className="chartLine" />
-            <div className="chartAxisLabels"><span>Equity</span><span>Trade history</span></div>
-          </div>
-          <div className="previewRows">
-            <div><span>MT5 trade history</span><b>Synced</b></div>
-            <div><span>Strategy attribution</span><b>Available</b></div>
-            <div><span>Session analysis</span><b>Available</b></div>
-          </div>
-        </div>
-      </section>
-
-      <section className="proofStrip">
-        <div><span>DATA SOURCES</span><b>MT5</b><b>DERIV</b><b>CSV</b><b>MANUAL</b></div>
-        <p>No execution layer. TradeVault records and analyzes.</p>
-      </section>
-
-      <section id="features" className="landingSection">
-        <div className="sectionIntro">
-          <span className="eyebrow">THE JOURNAL</span>
-          <h2>Everything you need to review a trading history.</h2>
-          <p>Designed around real trade records, not decorative dashboards or invented performance claims.</p>
-        </div>
-        <div className="featureGrid">
-          <Feature icon={Database} title="Unified history" text="Bring MT5, Deriv, CSV, and manual trades into one account-aware journal." />
-          <Feature icon={BarChart3} title="Performance analytics" text="Review P&L, win rate, profit factor, equity progression, sessions, and strategies." />
-          <Feature icon={SlidersHorizontal} title="Strategy & session filters" text="Slice your history by symbol, direction, strategy, session, and date." />
-          <Feature icon={ShieldCheck} title="Read-only integrations" text="Broker connectors are designed to record history, not place or modify trades." />
-          <Feature icon={FileSpreadsheet} title="CSV import" text="Bring existing history into TradeVault without rebuilding your journal from scratch." />
-          <Feature icon={TrendingUp} title="Evidence-first review" text="Use patterns supported by your own history instead of generic trading advice." />
-        </div>
-      </section>
-
-      <section id="workflow" className="workflowSection">
-        <div>
-          <span className="eyebrow">THE WORKFLOW</span>
-          <h2>Connect. Journal. Review.</h2>
-          <p className="workflowLead">Start with the history you already have. TradeVault turns it into a structured record you can interrogate over time.</p>
-        </div>
-        <div className="workflowSteps">
-          <Step n="01" t="Connect" d="Create a trading account and import CSV history or connect a read-only source." />
-          <Step n="02" t="Journal" d="Keep strategy, session, direction, execution context, and notes alongside the trade." />
-          <Step n="03" t="Review" d="Compare results across the dimensions that actually matter to your process." />
-        </div>
-      </section>
-
-      <section className="securitySection">
-        <div className="securityIcon"><ShieldCheck /></div>
-        <div><span className="eyebrow">READ-ONLY BY DESIGN</span><h2>Your journal should not trade for you.</h2><p>TradeVault is a performance and journaling system. Broker integrations are for importing history; trade execution stays outside the platform.</p></div>
-      </section>
-
-      <section id="pricing" className="pricingSection">
-        <div className="sectionIntro">
-          <span className="eyebrow">SIMPLE PRICING</span>
-          <h2>Start free. Upgrade when you need more.</h2>
-          <p>Start with the core journal. Pro adds deeper analytics, unlimited history, and read-only broker integrations.</p>
-        </div>
-        <div className="pricingGrid">
-          <div className="priceBlock"><span className="priceLabel">PRO</span><strong>$7<span className="pricePeriod"> / month</span></strong><p>Full TradeVault access for serious trade review.</p><div className="priceLine">Unlimited trade history</div><div className="priceLine">Advanced analytics</div><div className="priceLine">Strategy &amp; session analysis</div><div className="priceLine">MT5 / Deriv integrations</div><div className="priceLine">Advanced filters</div><span className="secondary priceButton">Payments opening soon</span></div>
-          <div className="priceBlock featuredPrice"><span className="priceLabel">COMING SOON</span><strong>$7<span className="pricePeriod"> / month</span></strong><p>For traders who need deeper history and integrations.</p><div className="priceLine">Everything in Free</div><div className="priceLine">Unlimited trade history</div><div className="priceLine">Advanced analytics</div><div className="priceLine">Strategy &amp; session analysis</div><div className="priceLine">MT5 / Deriv integrations</div><div className="priceLine">Advanced filters</div><span className="secondary priceButton">Payments opening soon</span></div>
-        </div>
-      </section>
-
-      <section className="finalCta">
-        <span className="eyebrow">YOUR NEXT REVIEW</span>
-        <h2>Stop guessing what your trading is doing.</h2>
-        <p>Put the history in one place and start reviewing it properly.</p>
-        <a href="#pricing" className="primary">View pricing<ArrowRight /></a>
-      </section>
-
-      <footer className="landingFooter">
-        <span>TradeVault</span><span>Trading performance infrastructure</span>
-        <div><Link href="/login">Log in</Link></div>
-      </footer>
-    </main>
-  );
+  return <main className="landing">
+    <nav className="landingNav"><Link href="/" className="landingBrand"><span className="brandMark">T</span><span><b>TradeVault</b><small>TRADING PERFORMANCE</small></span></Link><div className="landingLinks"><a href="#features">Platform</a><a href="#workflow">How it works</a><a href="#pricing">Pricing</a><Link href="/login">Log in</Link><Link href="/signup" className="primary landingCta">Start free <ArrowRight /></Link></div></nav>
+    <section className="landingHero"><div className="heroCopy"><span className="eyebrow">TRADING PERFORMANCE SYSTEM</span><h1>Stop guessing.<br /><em>Start reviewing.</em></h1><p>TradeVault turns your trading history into a structured performance system—so you can see what you traded, how you traded it, and what keeps repeating.</p><div className="heroActions"><Link href="/signup" className="primary">Start journaling free <ArrowRight /></Link><a href="#features" className="secondary">Explore the platform</a></div><div className="heroTrust"><ShieldCheck /> Read-only integrations · No trade execution · Built around your history</div></div>
+      <div className="terminalPreview"><div className="previewTop"><span><i /> TRADEVAULT / OVERVIEW</span><small>PERFORMANCE</small></div><div className="previewToolbar"><span>All accounts</span><span>All history</span><span>USD</span></div><div className="previewMetrics"><div><small>NET P&amp;L</small><b>Calculated</b><span>From closed trades</span></div><div><small>WIN RATE</small><b>Calculated</b><span>From trade history</span></div><div><small>TRADES</small><b>Live history</b><span>Journaled</span></div></div><div className="previewChart"><div className="chartGridLines" /><div className="chartLine" /><div className="chartAxisLabels"><span>Equity curve</span><span>Trade history</span></div></div><div className="previewRows"><div><span>MetaTrader 5</span><b>Connected</b></div><div><span>Deriv</span><b>Connected</b></div><div><span>Strategy analysis</span><b>Ready</b></div></div></div>
+    </section>
+    <section id="integrations" className="proofStrip"><div><span>DATA SOURCES</span><b>MT5</b><b>DERIV</b><b>CSV</b><b>MANUAL</b></div><p>No execution layer. TradeVault records and analyzes.</p></section>
+    <section id="features" className="landingSection"><div className="sectionIntro"><span className="eyebrow">THE PLATFORM</span><h2>Everything you need to understand your trading.</h2><p>TradeVault gives your history structure so every review can lead to a better decision.</p></div><div className="featureGrid">{features.map(([Icon,title,text]) => <article className="feature" key={title}><div className="featureIcon"><Icon /></div><h3>{title}</h3><p>{text}</p></article>)}</div></section>
+    <section id="workflow" className="workflowSection"><div><span className="eyebrow">THE WORKFLOW</span><h2>Connect. Journal. Review.</h2><p className="workflowLead">Start with the history you already have. TradeVault turns it into a structured record you can interrogate over time.</p></div><div className="workflowSteps"><Step n="01" t="Connect" d="Create a trading account and import CSV history or connect a read-only source." /><Step n="02" t="Journal" d="Keep strategy, session, direction, execution context, and notes alongside the trade." /><Step n="03" t="Review" d="Compare results across the dimensions that actually matter to your process." /></div></section>
+    <section className="showcaseSection"><div className="showcaseCopy"><span className="eyebrow">AUTOMATED JOURNALING</span><h2>Let the data come to you.</h2><p>Connect a supported account once, or import existing history. TradeVault turns completed trades into a reviewable record without asking you to rebuild everything manually.</p><div className="checkList"><div><span>✓</span> Account-aware trade history</div><div><span>✓</span> MT5 read-only bridge</div><div><span>✓</span> Deriv OAuth connection</div><div><span>✓</span> CSV and manual entry</div></div><Link href="/signup" className="textLink">Start with your history <ArrowRight /></Link></div><div className="dashboardMock"><div className="mockHeader"><span>TRADE JOURNAL</span><span>PERFORMANCE</span></div><div className="mockStats"><span><small>WIN RATE</small><b>Calculated</b></span><span><small>PROFIT FACTOR</small><b>Calculated</b></span><span><small>TRADE COUNT</small><b>Live</b></span></div><div className="mockTable"><div className="mockTableHead"><span>SYMBOL</span><span>SETUP</span><span>RESULT</span></div><div><span>EURUSD</span><span>London Breakout</span><b>Recorded</b></div><div><span>XAUUSD</span><span>Liquidity Sweep</span><b>Recorded</b></div><div><span>US30</span><span>NY Reversal</span><b>Recorded</b></div><div><span>GBPUSD</span><span>FVG Retest</span><b>Recorded</b></div></div></div></section>
+    <section className="analyticsSection"><div className="analyticsVisual"><div className="analyticsCard"><div className="analyticsCardTop"><span>PERFORMANCE BREAKDOWN</span><span>YOUR DATA</span></div><div className="analyticsBars"><div><span>Session</span><i style={{height:"82%"}} /><b>Compare</b></div><div><span>Symbol</span><i style={{height:"61%"}} /><b>Filter</b></div><div><span>Strategy</span><i style={{height:"34%"}} /><b>Review</b></div><div><span>Direction</span><i style={{height:"69%"}} /><b>Measure</b></div></div></div></div><div className="analyticsCopy"><span className="eyebrow">SEE THE PATTERNS</span><h2>Your edge is hiding in your history.</h2><p>Compare sessions, symbols, directions, strategies, and outcomes. Ask the useful question: <strong>what conditions make you profitable?</strong></p><div className="miniInsight"><TrendingUp /><div><b>Performance context</b><span>Break results down into the dimensions you actually trade.</span></div></div><div className="miniInsight"><SlidersHorizontal /><div><b>Focused filters</b><span>Move from the whole account to one setup or session.</span></div></div></div></section>
+    <section className="securitySection"><div className="securityIcon"><ShieldCheck /></div><div><span className="eyebrow">SECURITY &amp; CONTROL</span><h2>Your journal should not trade for you.</h2><p>TradeVault is a performance and journaling system. Broker integrations are designed to import and analyze history, while execution remains outside the platform.</p></div></section>
+    <section id="pricing" className="pricingSection"><div className="sectionIntro"><span className="eyebrow">PRICING</span><h2>Simple today. More value as TradeVault grows.</h2><p>Start building your journal before committing to a paid plan. Payments will be enabled as the commercial release matures.</p></div><div className="pricingCard"><div className="pricingTop"><span className="priceLabel">TRADEVAULT PRO</span><span className="comingPill">COMING SOON</span></div><div className="price"><strong>$7</strong><span>/ month</span></div><p>For traders who want deeper history, analytics, and connected accounts.</p><div className="priceFeatures">{["Unlimited trade history","Advanced analytics","MT5 / Deriv integrations","Strategy & session analysis","Advanced filters"].map(f=><div key={f}><span>✓</span> {f}</div>)}</div><Link href="/signup" className="primary priceButton">Create your account <ArrowRight /></Link></div></section>
+    <section className="finalCta"><span className="eyebrow">YOUR NEXT REVIEW</span><h2>Trade less blindly. Review more deliberately.</h2><p>Put your trading history in one place and start turning data into a process.</p><Link href="/signup" className="primary">Start journaling free <ArrowRight /></Link><small>No payment required to create an account.</small></section>
+    <footer className="landingFooter"><span>TradeVault</span><span>Trading performance infrastructure</span><div><a href="#features">Platform</a><a href="#pricing">Pricing</a><Link href="/login">Log in</Link></div></footer>
+  </main>;
 }
-
-function Feature({ icon: Icon, title, text }: { icon: typeof Database; title: string; text: string }) {
-  return <article className="feature"><div className="featureIcon"><Icon /></div><h3>{title}</h3><p>{text}</p></article>;
-}
-function Step({ n, t, d }: { n: string; t: string; d: string }) {
-  return <div className="step"><span>{n}</span><div><b>{t}</b><p>{d}</p></div></div>;
-}
+function Step({n,t,d}:{n:string;t:string;d:string}){return <div className="step"><span>{n}</span><div><b>{t}</b><p>{d}</p></div></div>}
