@@ -1,2 +1,7 @@
 import TradeVaultDashboard from "@/components/tradevault-dashboard";
-export default function DashboardPage(){return <TradeVaultDashboard/>;}
+import { getCurrentUser } from "@/lib/auth";
+
+export default async function DashboardPage() {
+  const user = await getCurrentUser();
+  return <TradeVaultDashboard isAdmin={user?.role === "ADMIN"} />;
+}
