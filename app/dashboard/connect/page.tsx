@@ -106,7 +106,7 @@ export default function DerivConnectPage() {
       <label>TradeVault account<select value={accountId} onChange={e=>setAccountId(e.target.value)} style={{marginTop:8}}>{accounts.map(a=><option key={a.id} value={a.id}>
               {a.name}{a.broker==="Deriv" ? " · " + (a.platform ?? "DERIV") + " · " + (a.environment ?? "REAL") : ""}
             </option>)}</select></label>
-      <a className="primary wide" href={accountId ? "/api/auth/deriv?accountId="+encodeURIComponent(accountId) : "#"} onClick={e=>{if(!accountId){e.preventDefault();setMessage("Select a TradeVault account first.");}}} style={{display:"flex",justifyContent:"center",textDecoration:"none",marginTop:16}}>
+      <a className="primary wide" href={accountId ? "/api/auth/deriv?accountId="+encodeURIComponent(accountId) : "#"} onClick={e=>{if(!accountId){e.preventDefault();setMessage("Select a TradeVault account first.");} else if(accounts.find(a=>a.id===accountId)?.platform === "MT5"){e.preventDefault();setMessage("MT5 accounts use the TradeVault Bridge below, not Deriv OAuth.");}}} style={{display:"flex",justifyContent:"center",textDecoration:"none",marginTop:16}}>
         <ExternalLink/> Connect with Deriv
       </a>
       {message && <div className="authError" style={{marginTop:16}}>{message}</div>}
