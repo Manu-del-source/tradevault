@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, CheckCircle2, ExternalLink, RefreshCw, ShieldCheck, Plus } from "lucide-react";
+import { ArrowLeft, CheckCircle2, ExternalLink, RefreshCw, ShieldCheck, Plus, Download } from "lucide-react";
 
 type Account = {
   id: string;
@@ -69,16 +69,30 @@ export default function DerivConnectPage() {
     setAddingMt5(false);
   }
 
-  async function createBridgeToken() {
+  async function downloadInstaller() {
     if (!accountId) return;
     setBridgeBusy(true); setMessage(""); setBridgeToken("");
-    const r = await fetch("/api/mt5/credentials", {
-      method: "POST", headers: { "Content-Type": "application/json" },
+    const r = await fetch("/api/mt5/installer", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ accountId })
     });
-    const data = await r.json();
-    if (!r.ok) setMessage(data.error ?? "Unable to create MT5 bridge token.");
-    else setBridgeToken(data.token ?? "");
+    if (!r.ok) {
+      const data = await r.json().catch(() => ({}));
+      setMessage(data.error ?? "Unable to prepare the MT5 installer.");
+      setBridgeBusy(false);
+      return;
+    }
+    const blob = await r.blob();
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "TradeVault-MT5-Setup.ps1";
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+    setMessage("Installer downloaded. Run it on the Windows computer where MT5 is installed.");
     setBridgeBusy(false);
   }
 
@@ -131,25 +145,24 @@ export default function DerivConnectPage() {
     </div>
 
     {accounts.find(a=>a.id===accountId)?.platform === "MT5" && <div className="card" style={{margin:"16px 0 0",padding:24}}>
-      <span className="eyebrow">MT5 BRIDGE</span>
-      <h2 style={{marginTop:6}}>Enable automatic synchronization</h2>
-      <p style={{margin:"8px 0 16px"}}>Install the TradeVault Bridge EA in the customer’s MT5 terminal. It reads closed deals and sends them to TradeVault over HTTPS. It cannot place trades.</p>
-      <button className="primary wide" onClick={createBridgeToken} disabled={bridgeBusy}>{bridgeBusy ? "Generating…" : "Generate bridge token"}</button>
-      {bridgeToken && <div style={{marginTop:16}}>
-        <label>Copy this token now<input readOnly value={bridgeToken} onFocus={e=>e.currentTarget.select()} /></label>
-        <div className="authNote" style={{marginTop:12}}><ShieldCheck/> This plaintext token is shown once. Store it securely and paste it into the EA’s SyncToken input.</div>
-      </div>}
+      <span className="eyebrow">MT5 CONNECTION</span>
+      <h2 style={{marginTop:6}}>Connect automatically</h2>
+      <p style={{margin:"8px 0 16px"}}>TradeVault prepares the bridge for this account. No token copying, MQL5 editing, or API URL configuration is required.</p>
+      <button className="primary wide" onClick={downloadInstaller} disabled={bridgeBusy}>
+        <Download/> {bridgeBusy ? "Preparing installer…" : "Download MT5 setup"}
+      </button>
+      <div className="authNote" style={{marginTop:12}}>
+        <ShieldCheck/> The setup file is unique to this account. Your MT5 password never enters TradeVault.
+      </div>
       <div style={{marginTop:16,fontSize:14,lineHeight:1.6}}>
-        <strong>MT5 setup</strong>
+        <strong>3 steps</strong>
         <ol style={{paddingLeft:20,margin:"8px 0 0"}}>
-          <li>Open MT5 and log into this exact account.</li>
-          <li>Copy <code>mt5/TradeVaultBridge.mq5</code> into MetaEditor and compile it.</li>
-          <li>Attach TradeVaultBridge to any chart.</li>
-          <li>Set <code>TradeVaultURL</code> to <code>https://vault.smartbiz365.site/api/mt5/ingest</code>.</li>
-          <li>Paste the generated token into <code>SyncToken</code>.</li>
-          <li>In MT5, allow WebRequest for <code>https://vault.smartbiz365.site</code>.</li>
+          <li>Download and run the setup file on the Windows PC with MT5.</li>
+          <li>Open MT5 and attach <code>TradeVaultBridge</code> from Navigator → Expert Advisors to any chart.</li>
+          <li>Allow the TradeVault connection if MT5 asks for permission.</li>
         </ol>
       </div>
     </div> }
+
   </div></main>;
 }
