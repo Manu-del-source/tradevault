@@ -8,7 +8,15 @@ import {
   TrendingDown, TrendingUp, Upload, Wallet, X
 } from "lucide-react";
 
-type Account = { id: string; name: string; broker: string | null; currency: string };
+type Account = {
+  id: string;
+  name: string;
+  broker: string | null;
+  platform: string | null;
+  environment: string | null;
+  accountId: string | null;
+  currency: string;
+};
 type Trade = {
   id: string;
   symbol: string;
@@ -158,9 +166,12 @@ export default function TradeVaultDashboard({ isAdmin = false }: { isAdmin?: boo
       <aside className="sidebar">
         <div className="brand"><div className="brandMark">T</div><div><strong>TradeVault</strong><span>TRADING JOURNAL</span></div></div>
         <div className="account">
-          <div><span>Account</span><b>{account?.name ?? (loading ? "Loading..." : "No account")}</b></div>
+          <div><span>Account</span><b>{account?.name ?? (loading ? "Loading..." : "No account")}</b>
+          {account?.broker && <small>{account.platform ?? account.broker} · {account.environment ?? "REAL"}{account.accountId ? " · " + account.accountId : ""}</small>}</div>
           <ChevronDown size={16}/>
-          {accounts.length > 1 && <select aria-label="Select account" value={accountId} onChange={e => setAccountId(e.target.value)}>{accounts.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}</select>}
+          {accounts.length > 1 && <select aria-label="Select account" value={accountId} onChange={e => setAccountId(e.target.value)}>{accounts.map(a => <option key={a.id} value={a.id}>
+              {a.name}{a.broker ? " · " + (a.platform ?? a.broker) + " · " + (a.environment ?? "REAL") : ""}
+            </option>)}</select>}
         </div>
         <nav>{nav.map(n => <button key={n} className={active === n ? "navItem active" : "navItem"} onClick={() => setActive(n)}>{n === "Dashboard" ? <LayoutDashboard/> : n === "Journal" ? <BookOpen/> : n === "Analytics" ? <BarChart3/> : <Bot/>}{n}</button>)}</nav>
         {isAdmin && <a className="navItem adminLink" href="/admin"><ShieldCheck/>Admin Dashboard</a>}
