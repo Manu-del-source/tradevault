@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "printf '%s\\n' 'ALTER TABLE \"User\" ADD COLUMN IF NOT EXISTS \"username\" TEXT;' 'UPDATE \"User\" SET \"username\" = CONCAT($$user_$$, SUBSTRING(MD5(id), 1, 12)) WHERE \"username\" IS NULL;' 'CREATE UNIQUE INDEX IF NOT EXISTS \"User_username_key\" ON \"User\"(\"username\");' | prisma db execute --stdin && prisma generate && prisma db push && next build",
+    "build": "printf '%s\\n' 'ALTER TABLE \"User\" ADD COLUMN IF NOT EXISTS \"username\" TEXT;' 'UPDATE \"User\" SET \"username\" = CONCAT($$user_$$, SUBSTRING(MD5(id), 1, 12)) WHERE \"username\" IS NULL;' 'CREATE UNIQUE INDEX IF NOT EXISTS \"User_username_key\" ON \"User\"(\"username\");' | prisma db execute --stdin --schema prisma/schema.prisma && prisma generate && prisma db push && next build",
     "start": "next start",
     "db:generate": "prisma generate",
     "db:push": "prisma db push",
