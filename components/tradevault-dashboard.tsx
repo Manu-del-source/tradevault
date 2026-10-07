@@ -174,7 +174,7 @@ export default function TradeVaultDashboard({ isAdmin = false }: { isAdmin?: boo
             </option>)}</select>}
         </div>
         <nav>{nav.map(n => <button key={n} className={active === n ? "navItem active" : "navItem"} onClick={() => setActive(n)}>{n === "Dashboard" ? <LayoutDashboard/> : n === "Journal" ? <BookOpen/> : n === "Analytics" ? <BarChart3/> : <Bot/>}{n}</button>)}</nav>
-        {isAdmin && <a className="navItem" href="/billing"><Wallet/>Billing</a>{isAdmin && <a className="navItem adminLink" href="/admin"><ShieldCheck/>Admin Dashboard</a>}}
+        <a className="navItem" href="/billing"><Wallet/>Billing</a>{isAdmin && <a className="navItem adminLink" href="/admin"><ShieldCheck/>Admin Dashboard</a>}
         <div className="sideBottom">
           <button className="navItem" onClick={logout}><Settings/>Sign out</button>
           <div className="status"><ShieldCheck/><span><b>Journal sync</b>{account?.broker ? "Connected: " + account.broker : "Local account ready"}</span></div>
