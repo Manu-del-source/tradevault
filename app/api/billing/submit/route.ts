@@ -19,13 +19,18 @@ export async function POST(request: Request) {
 
   const payment = reference
     ? await prisma.payment.findFirst({ where: { reference, userId: user.id, status: "PENDING" } })
-    : await prisma.payment.findFirst({ where: { userId: user.id, provider: "MPESA_TILL", status: "PENDING" }, orderBy: { createdAt: "desc" } });
+    : await prisma.payment.findFirst({
+        where: { userId: user.id, provider: "MPESA_TILL", status: "PENDING" },
+        orderBy: { createdAt: "desc" }
+      });
 
-  if (!payment) return NextResponse.json({ error: "No pending payment was found. Start the payment again." }, { status: 404);
+  if (!payment) {
+    return NextResponse.json({ error: "No pending payment was found. Start the payment again." }, { status: 404 });
+  }
 
   const updated = await prisma.payment.update({
     where: { id: payment.id },
-    data: { providerInvoiceId: transactionCode, reference: payment.reference, status: "SUBMITTED" }
+    data: { providerInvoiceId: transactionCode, status: "SUBMITTED" }
   });
 
   return NextResponse.json({ ok: true, paymentId: updated.id, status: updated.status });
