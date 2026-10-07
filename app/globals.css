@@ -531,3 +531,77 @@ textarea{
 .authNote svg{color:var(--accent)}
 .authSwitch{border-color:var(--line);color:var(--muted)}
 .authSwitch a{color:#087b4d}
+
+/* Mobile dashboard refinement */
+.mobileHeader{display:none}
+@media(max-width:650px){
+  .mobileHeader{
+    position:sticky;top:0;z-index:8;
+    display:flex;align-items:center;justify-content:space-between;
+    min-height:58px;padding:10px 14px;
+    background:rgba(255,255,255,.96);
+    border-bottom:1px solid var(--line);
+    backdrop-filter:blur(12px);
+  }
+  .mobileHeader .brand{margin:0}
+  .mobileHeader .brandMark{width:32px;height:32px;font-size:17px}
+  .mobileHeader .brand strong{font-size:14px}
+  .mobileHeader .brand span{font-size:7px}
+  .content{padding:18px 12px 28px}
+  .topbar{align-items:flex-start;gap:12px;margin-bottom:18px}
+  .topbar h1{font-size:24px;line-height:1.1}
+  .topActions{width:100%;display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .topActions a,.topActions button{min-height:42px;justify-content:center;padding:9px 8px;font-size:11px}
+  .topActions a:first-child{grid-column:1/-1}
+  .heroGrid{grid-template-columns:1fr 1fr;gap:8px}
+  .metric{padding:13px 12px;min-width:0}
+  .metricIcon{width:29px;height:29px;margin-bottom:10px}
+  .metric strong{font-size:18px;overflow:hidden;text-overflow:ellipsis}
+  .metric span{font-size:9px;color:var(--muted)}
+  .metric small{font-size:8px;line-height:1.35}
+  .mainGrid,.analyticsGrid,.insightGrid{grid-template-columns:1fr;gap:10px}
+  .card{padding:15px;border-radius:10px}
+  .cardHead{gap:10px;flex-wrap:wrap}
+  .cardHead select{max-width:100%}
+  .equityChart,.chart{height:180px}
+  .equityChart svg{height:150px}
+  .journalToolbar{gap:9px}
+  .filterRow{grid-template-columns:1fr 1fr}
+  .filterRow select,.filterRow button{width:100%;min-width:0}
+  .tableWrap,.importPreview{width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch}
+  table{min-width:620px}
+  .drawerOverlay{align-items:flex-end}
+  .drawer{
+    width:100%;height:min(92vh,760px);
+    border-left:0;border-top:1px solid var(--line);
+    border-radius:18px 18px 0 0;padding:18px 14px 28px;
+  }
+  .drawerGrid,.formGrid{grid-template-columns:1fr}
+  .drawerActions{position:sticky;bottom:0;background:#fff;padding-bottom:4px}
+  .overlay{padding:0;align-items:flex-end}
+  .modal{
+    width:100%;max-height:94vh;overflow:auto;
+    border-radius:18px 18px 0 0;
+    padding:18px 14px 24px;
+  }
+  .modal .formGrid{grid-template-columns:1fr}
+  .fileDrop{padding:13px}
+  .importModal{max-height:94vh}
+  .importPreview table{min-width:600px}
+  .aiHero{flex-direction:column;gap:12px}
+  .bias{grid-template-columns:1fr}
+  .pagination{font-size:9px}
+  .pagination>div{flex-wrap:wrap}
+  .billingPanel{max-width:520px}
+  .billingPrice strong{font-size:38px}
+}
+@media(min-width:651px){
+  .mobileHeader{display:none}
+}
+.billingPrice{margin:22px 0 18px;display:flex;align-items:baseline;gap:6px}
+.billingPrice strong{font-size:44px;letter-spacing:-2px;color:var(--text)}
+.billingPrice span{color:var(--muted)}
+.billingFeatures{display:grid;gap:9px;margin:20px 0}
+.billingFeatures div{display:flex;align-items:center;gap:9px;color:var(--text);font-size:12px}
+.billingFeatures svg{width:16px;color:var(--accent)}
+.billingPay{min-height:48px}
