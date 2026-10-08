@@ -143,11 +143,43 @@ async function generateNarrative(review: any) {
     })
   });
 
-  if(!response.ok) return null;
-  const data=await response.json();
-  const text=data.output_text;
-  if(!text) return null;
-  try { return JSON.parse(text); } catch { return null; }
+  const data=await response.json().catch(()=>null);
+
+  if(!response.ok) {
+    console.error("TradeVault AI provider error", {
+      status: response.status,
+      error: data?.error?.message ?? data?.error ?? "Unknown OpenAI error"
+    });
+    return null;
+  }
+
+  const text =
+    typeof data?.output_text === "string"
+      ? data.output_text
+      : Array.isArray(data?.output)
+        ? data.output
+            .flatMap((item:any) => Array.isArray(item?.content) ? item.content : [])
+            .map((item:any) => item?.text)
+            .filter((value:any): value is string => typeof value === "string")
+            .join("")
+        : "";
+
+  if(!text) {
+    console.error("TradeVault AI provider returned no text output", {
+      responseId: data?.id ?? null,
+      status: data?.status ?? null
+    });
+    return null;
+  }
+
+  try {
+    return JSON.parse(text);
+  } catch {
+    console.error("TradeVault AI provider returned non-JSON output", {
+      responseId: data?.id ?? null
+    });
+    return null;
+  }
 }
 
 async function authorizedUser() {
