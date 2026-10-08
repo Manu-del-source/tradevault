@@ -193,7 +193,7 @@ export default function TradeVaultDashboard({ isAdmin = false, isPro = false }: 
         {error && <div className="errorBar">{error}<button onClick={() => setError("")}><X size={15}/></button></div>}
         {loading ? <div className="card full loadingState">Loading account data…</div> :
           active === "Dashboard" ? <Dashboard net={net} winRate={winRate} pf={pf} wins={wins} losses={losses} trades={trades}/> :
-          active === "Journal" ? <Journal accountId={accountId} onAdd={() => setModal(true)} onSelect={setSelectedTrade}/> :
+          active === "Journal" ? <Journal accountId={accountId} isPro={isPro} onAdd={() => setModal(true)} onSelect={setSelectedTrade}/> :
           active === "Analytics" ? <Analytics trades={trades}/> :
           <AIReview trades={trades}/>}
       </section>
@@ -332,7 +332,7 @@ function Dashboard({net,winRate,pf,wins,losses,trades}:{net:number;winRate:numbe
 
 function Session({n,v,p}:{n:string;v:string;p:string}) { return <div className="session"><div><b>{n}</b><span>{v}</span></div><small>{p}</small></div>; }
 
-function Journal({accountId,onAdd,onSelect}:{accountId:string;onAdd:()=>void;onSelect:(t:Trade)=>void}) {
+function Journal({accountId,isPro,onAdd,onSelect}:{accountId:string;isPro:boolean;onAdd:()=>void;onSelect:(t:Trade)=>void}) {
   const [query,setQuery]=useState("");
   const [sideFilter,setSideFilter]=useState("ALL");
   const [resultFilter,setResultFilter]=useState("ALL");
@@ -384,12 +384,7 @@ function Journal({accountId,onAdd,onSelect}:{accountId:string;onAdd:()=>void;onS
   return <section className="card full">
     <div className="journalToolbar">
       <div className="search"><Search/><input placeholder="Search symbols or strategies..." value={query} onChange={e=>setQuery(e.target.value)}/></div>
-      <div className="filterRow">
-        <select aria-label="Direction filter" value={sideFilter} onChange={e=>setSideFilter(e.target.value)}><option value="ALL">All directions</option><option value="LONG">Long</option><option value="SHORT">Short</option></select>
-        <select aria-label="Result filter" value={resultFilter} onChange={e=>setResultFilter(e.target.value)}><option value="ALL">All results</option><option value="WIN">Wins</option><option value="LOSS">Losses</option><option value="BREAK_EVEN">Break-even</option></select>
-        <select aria-label="Session filter" value={sessionFilter} onChange={e=>setSessionFilter(e.target.value)}><option value="ALL">All sessions</option><option>Asia</option><option>London</option><option>New York</option></select>
-        <button className="secondary" onClick={onAdd}><Plus/>Add trade</button>
-      </div>
+      <div className="filterRow">{isPro && <><select aria-label="Direction filter" value={sideFilter} onChange={e=>setSideFilter(e.target.value)}><option value="ALL">All directions</option><option value="LONG">Long</option><option value="SHORT">Short</option></select><select aria-label="Result filter" value={resultFilter} onChange={e=>setResultFilter(e.target.value)}><option value="ALL">All results</option><option value="WIN">Wins</option><option value="LOSS">Losses</option><option value="BREAK_EVEN">Break-even</option></select><select aria-label="Session filter" value={sessionFilter} onChange={e=>setSessionFilter(e.target.value)}><option value="ALL">All sessions</option><option>Asia</option><option>London</option><option>New York</option></select></>}<button className="secondary" onClick={onAdd}><Plus/>Add trade</button></div>
     </div>
     {error && <div className="drawerMessage">{error}</div>}
     {loading ? <div className="loadingState">Loading journal…</div> :
