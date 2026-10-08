@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
 import { TradeSide } from "@prisma/client";
+import { FREE_TRADE_LIMIT, hasActivePro, isAdmin } from "@/lib/subscription";
 
 const toDate = (value: string | null) => {
   if (!value) return null;
@@ -30,6 +31,7 @@ export async function GET(request: Request) {
 
     const account = await prisma.tradingAccount.findFirst({ where: { id: accountId, userId: user.id }, select: { id: true } });
     if (!account) return NextResponse.json({ error: "Account not found" }, { status: 404 });
+    const pro = isAdmin(user) || await hasActivePro(user.id);
     const where = {
       accountId,
       ...(q ? { OR: [
@@ -44,17 +46,20 @@ export async function GET(request: Request) {
       ...((dateFrom || dateTo) ? { closedAt: { ...(dateFrom ? { gte: dateFrom } : {}), ...(dateTo ? { lte: dateTo } : {}) } } : {})
     };
 
-    const [trades, total] = await prisma.$transaction([
-      prisma.trade.findMany({
-        where,
-        orderBy: [{ closedAt: "desc" }, { createdAt: "desc" }],
-        skip: (page - 1) * pageSize,
-        take: pageSize
-      }),
-      prisma.trade.count({ where })
-    ]);
+    const rawSkip = (page - 1) * pageSize;
+    const effectiveTotal = pro ? await prisma.trade.count({ where }) : Math.min(FREE_TRADE_LIMIT, await prisma.trade.count({ where }));
+    if (!pro && rawSkip >= FREE_TRADE_LIMIT) {
+      return NextResponse.json({ trades: [], total: effectiveTotal, page, pageSize, pages: Math.max(1, Math.ceil(effectiveTotal / pageSize)) });
+    }
+    const effectiveTake = pro ? pageSize : Math.min(pageSize, FREE_TRADE_LIMIT - rawSkip);
+    const trades = await prisma.trade.findMany({
+      where,
+      orderBy: [{ closedAt: "desc" }, { createdAt: "desc" }],
+      skip: rawSkip,
+      take: effectiveTake
+    });
 
-    return NextResponse.json({ trades, total, page, pageSize, pages: Math.max(1, Math.ceil(total / pageSize)) });
+    return NextResponse.json({ trades, total: effectiveTotal, page, pageSize, pages: Math.max(1, Math.ceil(effectiveTotal / pageSize)) });
   } catch {
     return NextResponse.json({ error: "Unable to load trades" }, { status: 500 });
   }
@@ -73,6 +78,10 @@ export async function POST(request: Request) {
     }
     const account = await prisma.tradingAccount.findFirst({ where: { id: accountId, userId: user.id }, select: { id: true } });
     if (!account) return NextResponse.json({ error: "Account not found" }, { status: 404 });
+    if (!isAdmin(user) && !(await hasActivePro(user.id))) {
+      const tradeCount = await prisma.trade.count({ where: { account: { userId: user.id } } });
+      if (tradeCount >= FREE_TRADE_LIMIT) return NextResponse.json({ error: "Free plan is limited to 25 journal trades. Upgrade to Pro for unlimited trade history." }, { status: 403 });
+    }
     const trade = await prisma.trade.create({
       data: {
         accountId, symbol, pnl,
