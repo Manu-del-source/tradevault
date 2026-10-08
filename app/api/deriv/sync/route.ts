@@ -5,6 +5,7 @@ import { syncDerivAccount } from "@/lib/deriv";
 export async function POST(request: Request) {
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (user.role !== "ADMIN" && !(await (await import("@/lib/subscription")).hasActivePro(user.id))) return NextResponse.json({ error: "Deriv sync is available on TradeVault Pro. Upgrade to continue." }, { status: 403 });
 
   const body = await request.json().catch(() => ({}));
   const accountId = String(body.accountId ?? "");
