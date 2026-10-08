@@ -11,6 +11,7 @@ export async function POST(request: Request) {
   try {
     const user = await getCurrentUser();
     if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (user.role !== "ADMIN" && !(await (await import("@/lib/subscription")).hasActivePro(user.id))) return NextResponse.json({ error: "MT5 integration is available on TradeVault Pro. Upgrade to continue." }, { status: 403 });
 
     const body = await request.json();
     const accountId = String(body.accountId ?? "").trim();
