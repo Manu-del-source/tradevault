@@ -22,12 +22,12 @@ export async function GET(request: Request) {
     const pageSize = Math.min(100, Math.max(10, Number(params.get("pageSize") || "25") || 25));
     const q = params.get("q")?.trim() || "";
     const side = params.get("side");
-    const sideFilter: TradeSide | undefined = side === "LONG" || side === "SHORT" ? side : undefined;
+    const sideFilter: TradeSide | undefined = pro && (side === "LONG" || side === "SHORT") ? side : undefined;
     const result = params.get("result");
-    const strategy = params.get("strategy");
-    const session = params.get("session");
-    const dateFrom = toDate(params.get("dateFrom"));
-    const dateTo = toDate(params.get("dateTo"));
+    const strategy = pro ? params.get("strategy") : null;
+    const session = pro ? params.get("session") : null;
+    const dateFrom = pro ? toDate(params.get("dateFrom")) : null;
+    const dateTo = pro ? toDate(params.get("dateTo")) : null;
 
     const account = await prisma.tradingAccount.findFirst({ where: { id: accountId, userId: user.id }, select: { id: true } });
     if (!account) return NextResponse.json({ error: "Account not found" }, { status: 404 });
