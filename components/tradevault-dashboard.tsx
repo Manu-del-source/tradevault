@@ -195,7 +195,7 @@ export default function TradeVaultDashboard({ isAdmin = false, isPro = false }: 
           active === "Dashboard" ? <Dashboard net={net} winRate={winRate} pf={pf} wins={wins} losses={losses} trades={trades}/> :
           active === "Journal" ? <Journal accountId={accountId} isPro={isPro} onAdd={() => setModal(true)} onSelect={setSelectedTrade}/> :
           active === "Analytics" ? <Analytics trades={trades}/> :
-          <AIReview trades={trades}/>}
+          <AIReview accountId={accountId} trades={trades}/>}
       </section>
 
       {modal && <div className="overlay"><div className="modal">
@@ -441,16 +441,13 @@ function Analytics({trades}:{trades:Trade[]}) {
   return <div className="analyticsGrid"><section className="card"><span className="label">BY STRATEGY</span>{names.length ? names.map(s=>{const ts=trades.filter(t=>t.strategy===s),p=ts.reduce((a,t)=>a+Number(t.pnl),0);return <div className="analyticRow" key={s}><div><b>{s}</b><small>{ts.length} trades</small></div><strong className={p>=0?"profit":"loss"}>{money(p)}</strong></div>}) : <Empty/>}</section><section className="card"><span className="label">DIRECTIONAL BIAS</span>{trades.length ? <div className="bias">{["LONG","SHORT"].map(side=>{const ts=trades.filter(t=>t.side===side),p=ts.reduce((a,t)=>a+Number(t.pnl),0),pct=Math.round(ts.length/trades.length*100);return <div key={side}>{side==="LONG"?<TrendingUp/>:<TrendingDown/>}<b>{side==="LONG"?"Long":"Short"}</b><strong className={p>=0?"profit":"loss"}>{money(p)}</strong><small>{pct}% of trades · {ts.length} {ts.length===1?"trade":"trades"}</small></div>})}</div> : <Empty/>}</section></div>;
 }
 
-function AIReview({trades}:{trades:Trade[]}) {
+function AIReview({accountId,trades}:{accountId:string;trades:Trade[]}) {
   const [review,setReview]=useState<any>(null);
   const [loading,setLoading]=useState(true);
   const [error,setError]=useState("");
   const [refresh,setRefresh]=useState(0);
 
   useEffect(()=>{
-    const id=(trades[0] as any)?.accountId;
-    const accountParam=new URLSearchParams(window.location.search).get("accountId");
-    const accountId=accountParam || (window as any).__tradeVaultAccountId;
     if(!accountId){ setLoading(false); setError("Select a trading account to generate the review."); return; }
     setLoading(true); setError("");
     fetch("/api/ai-review?accountId="+encodeURIComponent(accountId),{cache:"no-store"})
