@@ -442,13 +442,55 @@ function Analytics({trades}:{trades:Trade[]}) {
 }
 
 function AIReview({trades}:{trades:Trade[]}) {
+  const [review,setReview]=useState<any>(null);
+  const [loading,setLoading]=useState(true);
+  const [error,setError]=useState("");
+  const [refresh,setRefresh]=useState(0);
+
+  useEffect(()=>{
+    const id=(trades[0] as any)?.accountId;
+    const accountParam=new URLSearchParams(window.location.search).get("accountId");
+    const accountId=accountParam || (window as any).__tradeVaultAccountId;
+    if(!accountId){ setLoading(false); setError("Select a trading account to generate the review."); return; }
+    setLoading(true); setError("");
+    fetch("/api/ai-review?accountId="+encodeURIComponent(accountId),{cache:"no-store"})
+      .then(async r=>{const d=await r.json();if(!r.ok) throw new Error(d.error||"Unable to generate review");return d;})
+      .then(setReview)
+      .catch(e=>setError(e instanceof Error?e.message:"Unable to generate review"))
+      .finally(()=>setLoading(false));
+  },[refresh,trades]);
+
+  if(loading) return <div className="aiPage"><section className="aiHero auroraHero"><AuroraFlux fullScreen={false} pauseWhenHidden pauseOnHover={false} mix={0.5} ariaLabel="Animated aurora background" /><div className="auroraContent"><div className="aiIcon"><Bot/></div><div><span className="label">TRADEVAULT AI</span><h2>Reading your trading history…</h2><p>Calculating performance, patterns, risk flags and actionable review points.</p></div></div></section></div>;
+  if(error) return <div className="aiPage"><div className="card insight"><div className="dot"/><div><b>AI Review unavailable</b><p>{error}</p></div></div></div>;
+  if(!review?.ready) return <div className="aiPage"><section className="aiHero auroraHero"><AuroraFlux fullScreen={false} pauseWhenHidden pauseOnHover={false} mix={0.5} ariaLabel="Animated aurora background" /><div className="auroraContent"><div className="aiIcon"><Bot/></div><div><span className="label">TRADEVAULT AI</span><h2>Build your evidence base.</h2><p>{review?.message||"More closed trades are needed before the review engine can make useful observations."}</p><b>{review?.tradesAnalyzed||0} / {review?.minimumTrades||5} trades</b></div></div></section><div className="insightGrid"><Insight title="Why this matters" text="A tiny sample can make a losing streak or winning streak look like an edge. TradeVault waits for enough evidence before making performance claims."/><Insight title="What unlocks" text="Once enough trades are recorded, the review compares payoff, win rate, strategies, sessions, symbols, drawdown and trading behavior."/><Insight title="Next step" text="Keep journaling consistently, then return here for an updated review."/></div></div>;
+
+  const s=review.summary;
+  const pf=s.profitFactor==null?"—":s.profitFactor.toFixed(2);
+  const positive=review.insights.filter((x:any)=>x.type==="positive");
+  const warnings=review.insights.filter((x:any)=>x.type==="warning");
   return <div className="aiPage">
     <section className="aiHero auroraHero">
       <AuroraFlux fullScreen={false} pauseWhenHidden pauseOnHover={false} mix={0.5} ariaLabel="Animated aurora background" />
-      <div className="auroraContent"><div className="aiIcon"><Bot/></div><div><span className="label">TRADEVAULT AI</span><h2>Analysis will follow the data.</h2><p>{trades.length} logged trades are available. The review engine will wait for sufficient history before making performance claims.</p></div></div>
+      <div className="auroraContent"><div className="aiIcon"><Bot/></div><div><span className="label">TRADEVAULT AI · {review.confidence.toUpperCase()} CONFIDENCE</span><h2>Your trading, reviewed.</h2><p>{review.verdict}</p><small>Analyzed {review.tradesAnalyzed} closed trades · {new Date(review.generatedAt).toLocaleString()}</small></div><button className="secondary" onClick={()=>setRefresh(x=>x+1)}>Refresh review</button></div>
     </section>
-    <div className="insightGrid"><Insight title="Current sample" text={trades.length+" trades are available for analysis."}/><Insight title="No fabricated conclusions" text="TradeVault will not label a setup your best strategy without enough evidence."/><Insight title="Next input" text="Import more history or connect a broker data source to deepen the review."/></div>
+
+    <div className="heroGrid">
+      <Metric icon={CircleDollarSign} label="Net P&L" value={money(s.net)} detail="Reviewed sample"/>
+      <Metric icon={Target} label="Win rate" value={Math.round(s.winRate*100)+"%"} detail={review.tradesAnalyzed+" trades analyzed"}/>
+      <Metric icon={TrendingUp} label="Profit factor" value={pf} detail="Gross profit ÷ gross loss"/>
+      <Metric icon={TrendingDown} label="Max drawdown" value={money(-Math.abs(s.maxDrawdown))} detail="Observed peak-to-trough"/>
+    </div>
+
+    <div className="insightGrid">
+      {review.insights.map((x:any,i:number)=><div className="card insight" key={i}><div className={x.type==="warning"?"dot warningDot":"dot"}/><div><b>{x.title}</b><p>{x.text}</p></div></div>)}
+    </div>
+
+    <div className="analyticsGrid">
+      <section className="card"><div className="cardHead"><div><span className="label">WHAT IS WORKING</span><h2>Strongest strategies</h2></div></div>{review.breakdown.strategies.filter((x:any)=>x.net>0).slice(0,5).map((x:any)=><div className="analyticRow" key={x.name}><div><b>{x.name}</b><small>{x.trades} trades · {Math.round(x.winRate*100)}% win rate</small></div><strong className="profit">{money(x.net)}</strong></div>)}{!positive.length&&<Empty title="No clear positive pattern yet" text="Keep journaling; the engine needs more evidence to separate signal from noise."/>}</section>
+      <section className="card"><div className="cardHead"><div><span className="label">RISK FLAGS</span><h2>Where to pay attention</h2></div></div>{warnings.slice(0,5).map((x:any,i:number)=><div className="analyticRow" key={i}><div><b>{x.title}</b><small>{x.text}</small></div></div>)}{!warnings.length&&<Empty title="No major flags detected" text="That does not mean risk is absent; keep reviewing consistently."/>}</section>
+    </div>
+
+    <section className="card"><div className="cardHead"><div><span className="label">ACTION PLAN</span><h2>Your next review priorities</h2></div></div><div className="checkList"><div><span>01</span> Protect the conditions behind your strongest strategy and session.</div><div><span>02</span> Review every losing cluster before increasing position size.</div><div><span>03</span> Watch the observed drawdown and fast re-entry flags as process metrics.</div></div><p className="muted" style={{marginTop:18}}>AI Review is based on your recorded history. It does not predict markets, place trades, or provide financial advice.</p></section>
   </div>;
 }
-
 function Insight({title,text}:{title:string;text:string}) { return <div className="card insight"><div className="dot"/><div><b>{title}</b><p>{text}</p></div></div>; }
