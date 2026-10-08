@@ -450,14 +450,14 @@ function AIReview({accountId,trades}:{accountId:string;trades:Trade[]}) {
   useEffect(()=>{
     if(!accountId){ setLoading(false); setError("Select a trading account to generate the review."); return; }
     setLoading(true); setError("");
-    fetch("/api/ai-review?accountId="+encodeURIComponent(accountId),{cache:"no-store"})
+    fetch("/api/ai-review",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({accountId}),cache:"no-store"})
       .then(async r=>{const d=await r.json();if(!r.ok) throw new Error(d.error||"Unable to generate review");return d;})
       .then(setReview)
       .catch(e=>setError(e instanceof Error?e.message:"Unable to generate review"))
       .finally(()=>setLoading(false));
   },[refresh,trades]);
 
-  if(loading) return <div className="aiPage"><section className="aiHero auroraHero"><AuroraFlux fullScreen={false} pauseWhenHidden pauseOnHover={false} mix={0.5} ariaLabel="Animated aurora background" /><div className="auroraContent"><div className="aiIcon"><Bot/></div><div><span className="label">TRADEVAULT AI</span><h2>Reading your trading history…</h2><p>Calculating performance, patterns, risk flags and actionable review points.</p></div></div></section></div>;
+  if(loading) return <div className="aiPage"><section className="aiHero auroraHero"><AuroraFlux fullScreen={false} pauseWhenHidden pauseOnHover={false} mix={0.5} ariaLabel="Animated aurora background" /><div className="auroraContent"><div className="aiIcon"><Bot/></div><div><span className="label">TRADEVAULT AI</span><h2>Reading your trading history…</h2><p>Calculating performance, patterns, risk flags and your personalized AI coaching report.</p></div></div></section></div>;
   if(error) return <div className="aiPage"><div className="card insight"><div className="dot"/><div><b>AI Review unavailable</b><p>{error}</p></div></div></div>;
   if(!review?.ready) return <div className="aiPage"><section className="aiHero auroraHero"><AuroraFlux fullScreen={false} pauseWhenHidden pauseOnHover={false} mix={0.5} ariaLabel="Animated aurora background" /><div className="auroraContent"><div className="aiIcon"><Bot/></div><div><span className="label">TRADEVAULT AI</span><h2>Build your evidence base.</h2><p>{review?.message||"More closed trades are needed before the review engine can make useful observations."}</p><b>{review?.tradesAnalyzed||0} / {review?.minimumTrades||5} trades</b></div></div></section><div className="insightGrid"><Insight title="Why this matters" text="A tiny sample can make a losing streak or winning streak look like an edge. TradeVault waits for enough evidence before making performance claims."/><Insight title="What unlocks" text="Once enough trades are recorded, the review compares payoff, win rate, strategies, sessions, symbols, drawdown and trading behavior."/><Insight title="Next step" text="Keep journaling consistently, then return here for an updated review."/></div></div>;
 
@@ -478,6 +478,18 @@ function AIReview({accountId,trades}:{accountId:string;trades:Trade[]}) {
       <Metric icon={TrendingDown} label="Max drawdown" value={money(-Math.abs(s.maxDrawdown))} detail="Observed peak-to-trough"/>
     </div>
 
+    {review.ai && <section className="card aiNarrative">
+      <div className="cardHead"><div><span className="label">AI COACH · PERSONALIZED REVIEW</span><h2>{review.ai.headline}</h2></div><div className="aiBadge"><Bot/> AI</div></div>
+      <p className="aiLead">{review.ai.executiveSummary}</p>
+      <div className="aiColumns">
+        <div><span className="label">WHAT'S WORKING</span>{review.ai.whatIsWorking.map((x:string,i:number)=><div className="aiBullet" key={i}><span>+</span>{x}</div>)}</div>
+        <div><span className="label">WHAT NEEDS ATTENTION</span>{review.ai.whatNeedsAttention.map((x:string,i:number)=><div className="aiBullet warning" key={i}><span>!</span>{x}</div>)}</div>
+      </div>
+      <div className="aiCoachNote"><b>Behavior read</b><p>{review.ai.behaviorRead}</p></div>
+      <div className="aiFocus"><div><span className="label">NEXT REVIEW FOCUS</span>{review.ai.nextWeekFocus.map((x:string,i:number)=><div className="aiPriority" key={i}><strong>{String(i+1).padStart(2,"0")}</strong><span>{x}</span></div>)}</div></div>
+      <p className="muted" style={{marginTop:18}}>{review.ai.confidenceNote}</p>
+      <p className="muted">{review.ai.disclaimer}</p>
+    </section>}
     <div className="insightGrid">
       {review.insights.map((x:any,i:number)=><div className="card insight" key={i}><div className={x.type==="warning"?"dot warningDot":"dot"}/><div><b>{x.title}</b><p>{x.text}</p></div></div>)}
     </div>
