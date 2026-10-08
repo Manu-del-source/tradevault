@@ -36,13 +36,13 @@ type Trade = {
   openedAt: string | null;
 };
 
-const nav = ["Dashboard", "Journal", "Analytics", "AI Review"];
+const freeNav = ["Dashboard", "Journal"];
 
 function money(value: number) {
   return (value >= 0 ? "+" : "-") + "$" + Math.abs(value).toLocaleString(undefined, { maximumFractionDigits: 2 });
 }
 
-export default function TradeVaultDashboard({ isAdmin = false }: { isAdmin?: boolean }) {
+export default function TradeVaultDashboard({ isAdmin = false, isPro = false }: { isAdmin?: boolean; isPro?: boolean }) {
   const [active, setActive] = useState("Dashboard");
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [accountId, setAccountId] = useState("");
@@ -173,7 +173,7 @@ export default function TradeVaultDashboard({ isAdmin = false }: { isAdmin?: boo
               {a.name}{a.broker ? " · " + (a.platform ?? a.broker) + " · " + (a.environment ?? "REAL") : ""}
             </option>)}</select>}
         </div>
-        <nav>{nav.map(n => <button key={n} className={active === n ? "navItem active" : "navItem"} onClick={() => setActive(n)}>{n === "Dashboard" ? <LayoutDashboard/> : n === "Journal" ? <BookOpen/> : n === "Analytics" ? <BarChart3/> : <Bot/>}{n}</button>)}</nav>
+        <nav>{(isPro ? ["Dashboard", "Journal", "Analytics", "AI Review"] : freeNav).map(n => <button key={n} className={active === n ? "navItem active" : "navItem"} onClick={() => setActive(n)}>{n === "Dashboard" ? <LayoutDashboard/> : n === "Journal" ? <BookOpen/> : n === "Analytics" ? <BarChart3/> : <Bot/>}{n}</button>)}</nav>
         {isAdmin ? <a className="navItem adminLink" href="/admin"><Wallet/>Payments</a> : <a className="navItem" href="/billing"><Wallet/>Billing</a>}{isAdmin && <a className="navItem adminLink" href="/admin"><ShieldCheck/>Admin Dashboard</a>}
         <div className="sideBottom">
           <button className="navItem" onClick={logout}><Settings/>Sign out</button>
@@ -186,7 +186,7 @@ export default function TradeVaultDashboard({ isAdmin = false }: { isAdmin?: boo
       <section className="content">
         <header className="topbar">
           <div><p className="eyebrow">TRADING PERFORMANCE</p><h1>{active}</h1></div>
-          <div className="topActions"><a className="secondary" href="/dashboard/connect" style={{display:"inline-flex",alignItems:"center",textDecoration:"none"}}>Connect Deriv</a><button className="secondary" onClick={() => setImportOpen(true)} disabled={!accountId}><Upload/>Import CSV</button><button className="primary" onClick={() => setModal(true)} disabled={!accountId}><Plus/>Log trade</button></div>
+          <div className="topActions">{isPro ? <a className="secondary" href="/dashboard/connect" style={{display:"inline-flex",alignItems:"center",textDecoration:"none"}}>Connect Deriv / MT5</a> : <a className="secondary" href="/billing" style={{display:"inline-flex",alignItems:"center",textDecoration:"none"}}>Upgrade to Pro</a>}<button className="secondary" onClick={() => isPro && setImportOpen(true)} disabled={!accountId || !isPro}><Upload/>{isPro ? "Import history" : "Import · Pro"}</button><button className="primary" onClick={() => setModal(true)} disabled={!accountId}><Plus/>Log trade</button></div>
         </header>
         {connectionNotice && <div className={connectionNotice.type === "success" ? "successMessage" : "errorBar"} style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:12,marginBottom:16}}><span>{connectionNotice.text}</span><button onClick={() => setConnectionNotice(null)}><X size={15}/></button></div>}
         {account?.broker === "Deriv" && <div className="successMessage" style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:12,marginBottom:16}}><span>✓ <b>Deriv connected</b> — TradeVault is linked to your Deriv account.</span><a href="/dashboard/connect" style={{textDecoration:"none"}}>Manage connection</a></div>}
