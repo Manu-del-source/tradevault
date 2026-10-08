@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createHash, randomBytes } from "node:crypto";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { hasActivePro } from "@/lib/subscription";
 
 function hashToken(token: string) { return createHash("sha256").update(token).digest("hex"); }
 function ps(value: string) { return value.replace(/'/g, "''"); }
@@ -10,6 +11,7 @@ export async function POST(request: Request) {
   try {
     const user = await getCurrentUser();
     if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (user.role !== "ADMIN" && !(await hasActivePro(user.id))) return NextResponse.json({ error: "MT5 integration is available on TradeVault Pro. Upgrade to continue." }, { status: 403 });
     const body = await request.json();
     const accountId = String(body.accountId ?? "").trim();
     if (!accountId) return NextResponse.json({ error: "Trading account is required." }, { status: 400 });
