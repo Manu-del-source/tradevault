@@ -15,6 +15,7 @@ type Account = {
 
 export default function DerivConnectPage() {
   const [accounts, setAccounts] = useState<Account[]>([]);
+  const [isPro, setIsPro] = useState(false);
   const [accountId, setAccountId] = useState("");
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
@@ -34,7 +35,7 @@ export default function DerivConnectPage() {
     setAccountId((current: string) => current || data[0]?.id || "");
   }
 
-  useEffect(() => { load().catch(() => setMessage("Unable to load your trading accounts.")); }, []);
+  useEffect(() => { fetch("/api/billing/status",{cache:"no-store"}).then(r=>r.json()).then(s=>{setIsPro(!!s.active); if(s.active) return load();}).catch(() => setMessage("Unable to load account access.")); }, []);
 
   async function addMt5() {
     if (!mt5Name.trim() || !mt5Login.trim()) {
@@ -108,6 +109,19 @@ export default function DerivConnectPage() {
     setMessage(r.ok ? "Sync complete: " + data.imported + " new trades imported." : (data.error ?? "Sync failed."));
     setBusy(false);
   }
+
+  if (!isPro) return <main className="authPage"><div className="authPanel" style={{maxWidth: 680}}>
+    <Link href="/dashboard" className="authBack"><ArrowLeft/> Back to dashboard</Link>
+    <div className="authMark">T</div>
+    <span className="eyebrow">TRADEVAULT PRO</span>
+    <h1>Broker connections are a Pro feature.</h1>
+    <p>Connect Deriv or MT5, import broker history automatically, and use the read-only integrations after upgrading to TradeVault Pro.</p>
+    <div className="card" style={{margin:"24px 0",padding:24}}>
+      <div className="priceFeatures"><div>✓ Deriv OAuth connection</div><div>✓ MT5 read-only Bridge EA</div><div>✓ Automatic history sync</div><div>✓ Multiple trading accounts</div></div>
+      <a className="primary wide" href="/billing" style={{display:"flex",justifyContent:"center",textDecoration:"none",marginTop:20}}>Upgrade to Pro</a>
+    </div>
+    <div className="authNote"><ShieldCheck/> Your broker password is never required by TradeVault.</div>
+  </div></main>;
 
   return <main className="authPage"><div className="authPanel" style={{maxWidth: 680}}>
     <Link href="/dashboard" className="authBack"><ArrowLeft/> Back to dashboard</Link>
