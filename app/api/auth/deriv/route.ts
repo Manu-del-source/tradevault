@@ -3,6 +3,7 @@ import { createHash, randomBytes } from "node:crypto";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { encryptSecret } from "@/lib/secret-crypto";
+import { hasActivePro } from "@/lib/subscription";
 
 function base64url(buffer: Buffer) {
   return buffer.toString("base64").replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
@@ -11,6 +12,7 @@ function base64url(buffer: Buffer) {
 export async function GET(request: Request) {
   const user = await getCurrentUser();
   if (!user) return NextResponse.redirect(new URL("/login", request.url));
+  if (user.role !== "ADMIN" && !(await hasActivePro(user.id))) return NextResponse.redirect(new URL("/billing", request.url));
 
   const accountId = new URL(request.url).searchParams.get("accountId");
   if (!accountId) return NextResponse.json({ error: "accountId is required" }, { status: 400 });
