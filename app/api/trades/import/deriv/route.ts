@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
+import { hasActivePro, isAdmin } from "@/lib/subscription";
 
 type DerivTransaction = Record<string, unknown>;
 
@@ -54,6 +55,7 @@ export async function POST(request: Request) {
   try {
     const user = await getCurrentUser();
     if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!isAdmin(user) && !(await hasActivePro(user.id))) return NextResponse.json({ error: "This feature is available on TradeVault Pro. Upgrade to continue." }, { status: 403 });
     const form = await request.formData();
     const accountId = text(form.get("accountId"));
     const file = form.get("file");
