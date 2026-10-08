@@ -18,12 +18,13 @@ export async function GET(request: Request) {
     const accountId = params.get("accountId");
     if (!accountId) return NextResponse.json({ error: "accountId is required" }, { status: 400 });
 
+    const pro = isAdmin(user) || await hasActivePro(user.id);
     const page = Math.max(1, Number(params.get("page") || "1") || 1);
     const pageSize = Math.min(100, Math.max(10, Number(params.get("pageSize") || "25") || 25));
     const q = params.get("q")?.trim() || "";
     const side = params.get("side");
     const sideFilter: TradeSide | undefined = pro && (side === "LONG" || side === "SHORT") ? side : undefined;
-    const result = params.get("result");
+    const result = pro ? params.get("result") : null;
     const strategy = pro ? params.get("strategy") : null;
     const session = pro ? params.get("session") : null;
     const dateFrom = pro ? toDate(params.get("dateFrom")) : null;
@@ -31,7 +32,6 @@ export async function GET(request: Request) {
 
     const account = await prisma.tradingAccount.findFirst({ where: { id: accountId, userId: user.id }, select: { id: true } });
     if (!account) return NextResponse.json({ error: "Account not found" }, { status: 404 });
-    const pro = isAdmin(user) || await hasActivePro(user.id);
     const where = {
       accountId,
       ...(q ? { OR: [
